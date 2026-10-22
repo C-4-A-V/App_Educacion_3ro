@@ -12,9 +12,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         DocenteEntity::class,
         CursoEntity::class,
         EstudianteEntity::class,
-        ActividadEntity::class
+        ActividadEntity::class,
+        IntentoActividadEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -26,6 +27,8 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun estudianteDao(): EstudianteDao
 
     abstract fun actividadDao(): ActividadDao
+
+    abstract fun intentoActividadDao(): IntentoActividadDao
 
     companion object {
 
@@ -119,6 +122,48 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS intentos_actividad (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        estudianteId INTEGER NOT NULL,
+                        actividadId INTEGER NOT NULL,
+                        respuestaElegida INTEGER NOT NULL,
+                        respuestaCorrecta INTEGER NOT NULL,
+                        correcta INTEGER NOT NULL,
+                        creadaEn INTEGER NOT NULL,
+                        FOREIGN KEY(estudianteId)
+                            REFERENCES estudiantes(id)
+                            ON UPDATE NO ACTION
+                            ON DELETE CASCADE,
+                        FOREIGN KEY(actividadId)
+                            REFERENCES actividades(id)
+                            ON UPDATE NO ACTION
+                            ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS
+                    index_intentos_actividad_estudianteId_actividadId
+                    ON intentos_actividad(estudianteId, actividadId)
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS
+                    index_intentos_actividad_actividadId
+                    ON intentos_actividad(actividadId)
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -129,8 +174,10 @@ abstract class MpazDatabase : RoomDatabase() {
                     .addMigrations(
                         MIGRATION_1_2,
                         MIGRATION_2_3,
-                        MIGRATION_3_4
+                        MIGRATION_3_4,
+                        MIGRATION_4_5
                     )
+                    .fallbackToDestructiveMigrationOnDowngrade(true)
                     .build()
                     .also { instancia = it }
             }
