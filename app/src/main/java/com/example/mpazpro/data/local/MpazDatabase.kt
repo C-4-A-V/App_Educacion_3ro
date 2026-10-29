@@ -167,16 +167,16 @@ abstract class MpazDatabase : RoomDatabase() {
 
         private fun sembrarDatosPrueba(db: SupportSQLiteDatabase) {
             try {
-                // 1. Depurar cualquier otro docente y dejar solo el de prueba (Milo@gmail.com / id = 1)
-                db.execSQL("DELETE FROM docentes WHERE id != 1 OR correo != 'Milo@gmail.com'")
+                // 1. Depurar cualquier otro docente y dejar solo el de prueba (milo@gmail.com / id = 1)
+                db.execSQL("DELETE FROM docentes WHERE id != 1 OR LOWER(correo) != 'milo@gmail.com'")
                 db.execSQL("DELETE FROM cursos WHERE docenteId != 1")
 
-                // 2. Insertar o actualizar el docente de prueba (Milo@gmail.com / Alegria2002) usando REPLACE
+                // 2. Insertar o actualizar el docente de prueba (milo@gmail.com / Alegria2002) usando REPLACE
                 val protegido = PasswordHasher.generar("Alegria2002")
                 db.execSQL(
                     """
                     INSERT OR REPLACE INTO docentes (id, nombre, correo, claveHash, claveSalt, claveIteraciones)
-                    VALUES (1, 'Profesor Milo', 'Milo@gmail.com', '${protegido.hash}', '${protegido.salt}', ${protegido.iteraciones})
+                    VALUES (1, 'Profesor Milo', 'milo@gmail.com', '${protegido.hash}', '${protegido.salt}', ${protegido.iteraciones})
                     """.trimIndent()
                 )
 

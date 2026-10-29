@@ -18,7 +18,7 @@ interface DocenteDao {
     @Query(
         """
         SELECT * FROM docentes
-        WHERE correo = :correo
+        WHERE LOWER(correo) = LOWER(:correo)
         LIMIT 1
         """
     )
