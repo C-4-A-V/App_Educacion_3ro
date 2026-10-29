@@ -3,8 +3,10 @@ package com.example.mpazpro.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.mpazpro.model.Asignatura
@@ -21,13 +23,6 @@ fun InicioEstudianteScreen(
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onSalir)
-
-    val asignaturas = listOf(
-        "Lenguaje y Comunicación",
-        "Matemática",
-        "Ciencias Naturales",
-        "Historia, Geografía y Ciencias Sociales"
-    )
 
     LazyColumn(
         modifier = modifier
@@ -61,6 +56,57 @@ fun InicioEstudianteScreen(
                 text = estudiante.cursoNombre,
                 modifier = Modifier.padding(top = 8.dp)
             )
+        }
+
+        // Tarjeta de Gamificación (Estrellas y Puntos)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.fillMaxWidth(0.72f)
+                    ) {
+                        Text(
+                            text = "Tus Estrellas Ganadas",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            text = if (progreso.correctas > 0) "¡Excelente trabajo! Sigue así 🌟" else "¡Responde actividades correctamente para ganar estrellas!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(64.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = "⭐ ${progreso.correctas}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onTertiary
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Tarjeta de Progreso General
