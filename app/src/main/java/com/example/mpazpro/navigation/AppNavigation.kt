@@ -23,6 +23,7 @@ import com.example.mpazpro.ui.screens.LoginDocenteScreen
 import com.example.mpazpro.ui.screens.PanelDocenteScreen
 import com.example.mpazpro.ui.screens.RegistroDocenteScreen
 import com.example.mpazpro.ui.screens.ResolverActividadScreen
+import com.example.mpazpro.ui.screens.ResultadosActividadScreen
 import com.example.mpazpro.ui.screens.SeleccionEstudianteScreen
 import com.example.mpazpro.ui.viewmodel.AccesoEstudianteViewModel
 import com.example.mpazpro.ui.viewmodel.LoginDocenteViewModel
@@ -260,6 +261,13 @@ fun AppNavigation(
                         ) {
                             launchSingleTop = true
                         }
+                    },
+                    onVerResultados = { actividadId ->
+                        navController.navigate(
+                            Screen.ResultadosActividad.crearRuta(actividadId)
+                        ) {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -443,6 +451,36 @@ fun AppNavigation(
                 ResolverActividadScreen(
                     actividadId = actividadId,
                     estudiante = estudiante,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.ResultadosActividad.route,
+            arguments = listOf(
+                navArgument("actividadId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { entrada ->
+            val docente = estadoLogin.docente
+            val actividadId = entrada.arguments?.getLong("actividadId") ?: -1L
+
+            if (docente == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Bienvenida.route) {
+                        popUpTo(Screen.PanelDocente.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                ResultadosActividadScreen(
+                    actividadId = actividadId,
                     onVolver = {
                         navController.popBackStack()
                     }

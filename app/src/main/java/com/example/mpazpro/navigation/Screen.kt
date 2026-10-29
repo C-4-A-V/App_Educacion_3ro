@@ -65,4 +65,12 @@ sealed class Screen(val route: String) {
             return "actividad/$actividadId/resolver"
         }
     }
+
+    data object ResultadosActividad :
+        Screen("actividad/{actividadId}/resultados") {
+
+        fun crearRuta(actividadId: Long): String {
+            return "actividad/$actividadId/resultados"
+        }
+    }
 }

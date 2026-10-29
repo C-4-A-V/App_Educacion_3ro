@@ -17,6 +17,15 @@ interface ActividadDao {
 
     @Query(
         """
+        SELECT * FROM actividades
+        WHERE id = :actividadId
+        LIMIT 1
+        """
+    )
+    suspend fun buscarPorId(actividadId: Long): ActividadEntity?
+
+    @Query(
+        """
         SELECT a.*
         FROM actividades a
         INNER JOIN cursos c ON c.id = a.cursoId

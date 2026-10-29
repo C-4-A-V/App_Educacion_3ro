@@ -21,6 +21,7 @@ fun ActividadesDocenteScreen(
     asignatura: Asignatura,
     onVolver: () -> Unit,
     onCrearActividad: () -> Unit,
+    onVerResultados: (Long) -> Unit,
     modifier: Modifier = Modifier,
     actividadesViewModel: ActividadesDocenteViewModel = viewModel()
 ) {
@@ -135,6 +136,9 @@ fun ActividadesDocenteScreen(
                 key = { it.id }
             ) { actividad ->
                 Card(
+                    onClick = {
+                        onVerResultados(actividad.id)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -154,6 +158,12 @@ fun ActividadesDocenteScreen(
                         Text(
                             text = actividad.pregunta,
                             style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Text(
+                            text = "Toca para ver resultados de los estudiantes",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
