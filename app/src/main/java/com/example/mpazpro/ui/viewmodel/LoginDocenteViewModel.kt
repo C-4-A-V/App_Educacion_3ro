@@ -8,6 +8,7 @@ import com.example.mpazpro.data.repository.DocenteRepository
 import com.example.mpazpro.model.LoginDocenteErrores
 import com.example.mpazpro.model.LoginDocenteUiState
 import com.example.mpazpro.validation.LoginDocenteValidator
+import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,8 @@ class LoginDocenteViewModel(
     private var ingresoJob: Job? = null
 
     fun actualizarCorreo(valor: String) {
-        actualizar { it.copy(correo = valor) }
+        // Transforma automáticamente a minúsculas cualquier correo ingresado
+        actualizar { it.copy(correo = valor.lowercase(Locale.ROOT)) }
     }
 
     fun actualizarClave(valor: String) {
@@ -64,13 +66,18 @@ class LoginDocenteViewModel(
 
         if (actual.cargando || actual.docente != null) return
 
+        // Limpiamos espacios accidentales en el correo y clave
+        val correoLimpio = actual.correo.trim().lowercase(Locale.ROOT)
+        val claveLimpia = actual.clave.trim()
+
         val errores = LoginDocenteValidator.validar(
-            actual.correo,
-            actual.clave
+            correoLimpio,
+            claveLimpia
         )
 
         _uiState.update {
             it.copy(
+                correo = correoLimpio,
                 errores = errores,
                 intentoValidar = true,
                 mensaje = null
@@ -84,8 +91,8 @@ class LoginDocenteViewModel(
         ingresoJob = viewModelScope.launch {
             try {
                 val docente = repository.autenticar(
-                    correo = actual.correo,
-                    clave = actual.clave
+                    correo = correoLimpio,
+                    clave = claveLimpia
                 )
 
                 _uiState.update {

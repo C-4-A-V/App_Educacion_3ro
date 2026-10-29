@@ -48,7 +48,8 @@ fun EstudiantesScreen(
         item {
             Text(
                 text = estado.curso?.nombre ?: "Curso",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -65,25 +66,79 @@ fun EstudiantesScreen(
         }
 
         if (estado.curso != null && !estado.cargando) {
+            // Menú moderno en tarjetas / burbujas visuales
             item {
-                OutlinedButton(
-                    onClick = onGestionarActividades,
-                    enabled = !estado.guardando && !estado.importandoFoto,
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Gestionar actividades")
+                    Card(
+                        onClick = onGestionarActividades,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "📚",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                text = "Actividades",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "Crear y revisar",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "👥",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                text = "Estudiantes",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = "${estado.estudiantes.size} registrados",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
                 }
             }
 
             item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Registrar estudiante",
+                    text = "Registrar nuevo estudiante",
                     style = MaterialTheme.typography.titleLarge
                 )
             }
 
             item {
-                Text("Usa nombres ficticios para las pruebas.")
+                Text("Usa nombres ficticios para las pruebas de demostración.")
             }
 
             item {
@@ -139,21 +194,22 @@ fun EstudiantesScreen(
                 ) {
                     Text(
                         if (estado.guardando) "Guardando…"
-                        else "Registrar estudiante"
+                        else "Guardar estudiante"
                     )
                 }
             }
 
             item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Estudiantes: ${estado.estudiantes.size}",
+                    text = "Listado de estudiantes (${estado.estudiantes.size})",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
 
             if (estado.estudiantes.isEmpty()) {
                 item {
-                    Text("Todavía no hay estudiantes en este curso.")
+                    Text("Todavía no hay estudiantes registrados en este curso.")
                 }
             }
 
@@ -162,19 +218,29 @@ fun EstudiantesScreen(
                 key = { it.id }
             ) { estudiante ->
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
+                    Row(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
                         ImagenInteligente(
                             ruta = estudiante.fotoRuta,
                             descripcion = "Fotografía de ${estudiante.nombre}"
                         )
-                        Text(
-                            text = estudiante.nombre,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text("Identificador de prueba: E-${estudiante.id}")
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = estudiante.nombre,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "ID: E-${estudiante.id}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
                     }
                 }
             }

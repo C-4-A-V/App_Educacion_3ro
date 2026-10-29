@@ -1,13 +1,17 @@
 package com.example.mpazpro.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,60 +32,178 @@ fun PanelDocenteScreen(
         cursosViewModel.cargarCursos(docente.id)
     }
 
+    val cursoActual = estado.cursos.firstOrNull()
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .imePadding()
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // Cabecera con Logo y Avatar
         item {
-            Text(
-                text = "Panel docente",
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-
-        item {
-            Text(
-                text = "Hola, ${docente.nombre}",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        item {
-            Text(
-                text = "Mis cursos de Tercero Básico",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-
-        item {
-            OutlinedTextField(
-                value = estado.nombre,
-                onValueChange = cursosViewModel::actualizarNombre,
-                label = { Text("Nombre del curso") },
-                placeholder = { Text("Ejemplo: 3.º A") },
-                singleLine = true,
-                enabled = !estado.guardando && !estado.cargando,
-                isError = estado.errorNombre != null,
-                supportingText = {
-                    estado.errorNombre?.let { Text(it) }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        item {
-            Button(
-                onClick = cursosViewModel::crearCurso,
-                enabled = !estado.guardando && !estado.cargando,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "📖",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "MPAZ PRO 3.º",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "3.º Básico",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = docente.nombre.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
+        // Saludo principal
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    if (estado.guardando) "Guardando…" else "Crear curso"
+                    text = "¡Hola, docente!",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                Text(
+                    text = "¿Qué deseas hacer hoy?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+
+        // Cuadrícula de 6 Burbujas / Opciones del Menú (Estilo Mockup)
+        item {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 1. Agregar estudiantes
+                    MenuBubbleCard(
+                        title = "Agregar estudiantes",
+                        emoji = "👤+",
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+
+                    // 2. Agregar actividad
+                    MenuBubbleCard(
+                        title = "Agregar actividad",
+                        emoji = "📄+",
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 3. Mis cursos
+                    MenuBubbleCard(
+                        title = "Mis cursos",
+                        emoji = "📖",
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+
+                    // 4. Mis actividades
+                    MenuBubbleCard(
+                        title = "Mis actividades",
+                        emoji = "☑️",
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 5. Ver resultados
+                    MenuBubbleCard(
+                        title = "Ver resultados",
+                        emoji = "📊",
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+
+                    // 6. Mi perfil
+                    MenuBubbleCard(
+                        title = "Mi perfil",
+                        emoji = "⚙️",
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            // Acción de perfil o curso
+                            cursoActual?.let { onAbrirCurso(it.id) }
+                        }
+                    )
+                }
             }
         }
 
@@ -97,47 +219,62 @@ fun PanelDocenteScreen(
             item {
                 Text(
                     text = mensaje,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
 
-        if (!estado.cargando && estado.cursos.isEmpty()) {
-            item {
-                Text("Todavía no tienes cursos registrados.")
-            }
-        }
-
-        items(
-            items = estado.cursos,
-            key = { it.id }
-        ) { curso ->
-            Card(
-                onClick = { onAbrirCurso(curso.id) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = curso.nombre,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Text("Toca para ver estudiantes")
-                }
-            }
-        }
-
+        // Botón Cerrar sesión inferior
         item {
+            Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(
                 onClick = onCerrarSesion,
                 enabled = !estado.guardando,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Text("Cerrar sesión")
             }
+        }
+    }
+}
+
+@Composable
+private fun MenuBubbleCard(
+    title: String,
+    emoji: String,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        shape = RoundedCornerShape(28.dp),
+        modifier = modifier.height(140.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.headlineLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 }

@@ -3,6 +3,7 @@ package com.example.mpazpro.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,14 +37,18 @@ fun SeleccionEstudianteScreen(
         }
 
         item {
-            Text(
-                text = "¿Quién va a aprender?",
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-
-        item {
-            Text("Selecciona tu perfil de prueba.")
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "¿Quién va a aprender? 🎒",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Selecciona tu perfil para comenzar.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
 
         if (estado.cargando) {
@@ -64,10 +69,17 @@ fun SeleccionEstudianteScreen(
             estado.perfiles.isEmpty()
         ) {
             item {
-                Text(
-                    "Todavía no hay estudiantes. Un docente debe " +
-                        "registrarlos desde su curso."
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "Todavía no hay estudiantes registrados. Un docente debe agregarlos desde su panel.",
+                        modifier = Modifier.padding(20.dp)
+                    )
+                }
             }
         }
 
@@ -77,10 +89,14 @@ fun SeleccionEstudianteScreen(
         ) { perfil ->
             Card(
                 onClick = { onSeleccionar(perfil.id) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -95,14 +111,20 @@ fun SeleccionEstudianteScreen(
                     ) {
                         Text(
                             text = perfil.nombre,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
 
-                        Text(perfil.cursoNombre)
+                        Text(
+                            text = perfil.cursoNombre,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
 
                         Text(
-                            text = "E-${perfil.id}",
-                            style = MaterialTheme.typography.bodySmall
+                            text = "ID: E-${perfil.id}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
                 }

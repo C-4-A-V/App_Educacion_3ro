@@ -167,11 +167,7 @@ abstract class MpazDatabase : RoomDatabase() {
 
         private fun sembrarDatosPrueba(db: SupportSQLiteDatabase) {
             try {
-                // 1. Depurar cualquier otro docente y dejar solo el de prueba (milo@gmail.com / id = 1)
-                db.execSQL("DELETE FROM docentes WHERE id != 1 OR LOWER(correo) != 'milo@gmail.com'")
-                db.execSQL("DELETE FROM cursos WHERE docenteId != 1")
-
-                // 2. Insertar o actualizar el docente de prueba (milo@gmail.com / Alegria2002) usando REPLACE
+                // 1. Insertar o actualizar siempre el docente de prueba (milo@gmail.com / Alegria2002)
                 val protegido = PasswordHasher.generar("Alegria2002")
                 db.execSQL(
                     """
@@ -180,7 +176,7 @@ abstract class MpazDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 3. Curso de prueba (3.º Básico A)
+                // 2. Curso de prueba (3.º Básico A)
                 db.execSQL(
                     """
                     INSERT OR IGNORE INTO cursos (id, docenteId, nombre)
@@ -188,7 +184,7 @@ abstract class MpazDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 4. Estudiantes de prueba
+                // 3. Estudiantes de prueba
                 db.execSQL(
                     """
                     INSERT OR IGNORE INTO estudiantes (id, cursoId, nombre, fotoRuta)
@@ -259,10 +255,10 @@ abstract class MpazDatabase : RoomDatabase() {
                 )
 
                 val asignaturasMap = mapOf(
-                    "asig_lenguaje" to actividadesLenguaje,
-                    "asig_matematica" to actividadesMatematica,
-                    "asig_ciencias" to actividadesCiencias,
-                    "asig_historia" to actividadesHistoria
+                    "lenguaje" to actividadesLenguaje,
+                    "matematica" to actividadesMatematica,
+                    "ciencias" to actividadesCiencias,
+                    "historia" to actividadesHistoria
                 )
 
                 val timestampBase = System.currentTimeMillis() - 86400000L
@@ -272,8 +268,8 @@ abstract class MpazDatabase : RoomDatabase() {
                     for (p in lista) {
                         db.execSQL(
                             """
-                            INSERT OR IGNORE INTO actividades (id, cursoId, asignaturaId, titulo, instrucciones, pregunta, alternativaA, alternativaB, alternativaC, alternativaD, respuestaCorrecta, creadaEn)
-                            VALUES ($idContador, 1, '$asigId', 'Evaluación de ${asigId.substringAfter("_").replaceFirstChar { it.uppercase() }} #$idContador', '${p.instruccion}', '${p.pregunta}', '${p.alternativas[0]}', '${p.alternativas[1]}', '${p.alternativas[2]}', '${p.alternativas[3]}', ${p.correcta}, $timestampBase)
+                            INSERT OR REPLACE INTO actividades (id, cursoId, asignaturaId, titulo, instrucciones, pregunta, alternativaA, alternativaB, alternativaC, alternativaD, respuestaCorrecta, creadaEn)
+                            VALUES ($idContador, 1, '$asigId', 'Evaluación de ${asigId.replaceFirstChar { it.uppercase() }} #$idContador', '${p.instruccion}', '${p.pregunta}', '${p.alternativas[0]}', '${p.alternativas[1]}', '${p.alternativas[2]}', '${p.alternativas[3]}', ${p.correcta}, $timestampBase)
                             """.trimIndent()
                         )
                         idContador++

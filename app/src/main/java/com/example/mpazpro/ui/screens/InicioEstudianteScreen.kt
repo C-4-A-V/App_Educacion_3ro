@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +25,13 @@ fun InicioEstudianteScreen(
 ) {
     BackHandler(onBack = onSalir)
 
+    val asignaturasInfo = listOf(
+        Triple(Asignatura.LENGUAJE, "📖", MaterialTheme.colorScheme.primaryContainer),
+        Triple(Asignatura.MATEMATICA, "🔢", MaterialTheme.colorScheme.secondaryContainer),
+        Triple(Asignatura.CIENCIAS, "🌱", MaterialTheme.colorScheme.tertiaryContainer),
+        Triple(Asignatura.HISTORIA, "🌍", MaterialTheme.colorScheme.surfaceVariant)
+    )
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -31,40 +39,58 @@ fun InicioEstudianteScreen(
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Cabecera con saludo
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "MPAZ PRO 3.º",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "¡Vamos a aprender!",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(52.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = estudiante.nombre.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
+        // Subtítulo
         item {
             Text(
-                text = "MPAZ PRO 3.º",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+                text = "Elige una asignatura para comenzar.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.outline
             )
         }
 
-        item {
-            ImagenInteligente(
-                ruta = estudiante.fotoRuta,
-                descripcion = "Tu fotografía de perfil"
-            )
-        }
-
-        item {
-            Text(
-                text = "¡Hola, ${estudiante.nombre}!",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Text(
-                text = estudiante.cursoNombre,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        // Tarjeta de Gamificación (Estrellas y Puntos)
+        // Tarjeta de Gamificación (Estrellas Ganadas)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -115,7 +141,8 @@ fun InicioEstudianteScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
@@ -150,56 +177,61 @@ fun InicioEstudianteScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
-
-                    if (progreso.completadas > 0) {
-                        Text(
-                            text = "Precisión de aciertos: ${progreso.porcentajeAciertosTexto} (${progreso.correctas} correctas de ${progreso.completadas})",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
                 }
             }
         }
 
         item {
             Text(
-                text = "Mis asignaturas",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Text(
-                text = "Elige una asignatura para ver tus actividades.",
+                text = "Asignaturas de 3.º Básico",
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
 
-        Asignatura.entries.forEach { asignatura ->
+        // Tarjetas de Asignaturas (Estilo Asignatura Grid / Tarjetas)
+        asignaturasInfo.forEach { (asignatura, emoji, containerColor) ->
             item(key = asignatura.id) {
                 Card(
                     onClick = {
                         onAbrirAsignatura(asignatura.id)
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = containerColor
+                    )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = asignatura.titulo,
-                            style = MaterialTheme.typography.titleMedium
+                            text = emoji,
+                            style = MaterialTheme.typography.headlineLarge
                         )
 
-                        Text(
-                            text = asignatura.descripcion,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = asignatura.titulo,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Text(
+                                text = asignatura.descripcion,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
 
                         Text(
-                            text = "Ver actividades",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge
+                            text = "→",
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -207,9 +239,11 @@ fun InicioEstudianteScreen(
         }
 
         item {
+            Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(
                 onClick = onSalir,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Text("Salir de mi perfil")
             }

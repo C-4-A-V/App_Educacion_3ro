@@ -3,6 +3,7 @@ package com.example.mpazpro.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,7 +44,7 @@ fun AsignaturaScreen(
     ) {
         item {
             TextButton(onClick = onVolver) {
-                Text("Volver a mis asignaturas")
+                Text("← Volver a mis asignaturas")
             }
         }
 
@@ -57,13 +58,8 @@ fun AsignaturaScreen(
 
         item {
             Text(
-                text = estudiante.cursoNombre,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
                 text = asignatura.descripcion,
-                modifier = Modifier.padding(top = 8.dp)
+                style = MaterialTheme.typography.bodyLarge
             )
         }
 
@@ -73,7 +69,8 @@ fun AsignaturaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
@@ -122,8 +119,9 @@ fun AsignaturaScreen(
 
         item {
             Text(
-                text = "Mis actividades",
-                style = MaterialTheme.typography.titleLarge
+                text = "Actividades disponibles",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
@@ -151,7 +149,8 @@ fun AsignaturaScreen(
         ) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -178,7 +177,11 @@ fun AsignaturaScreen(
                 onClick = {
                     onAbrirActividad(actividad.id)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
@@ -190,18 +193,21 @@ fun AsignaturaScreen(
                     )
 
                     Text(
-                        text = actividad.instrucciones
+                        text = actividad.instrucciones,
+                        style = MaterialTheme.typography.bodyMedium
                     )
 
-                    Text(
-                        text = if (actividad.resuelta) {
-                            "Realizada · Ver resultado"
-                        } else {
-                            "Pendiente · Resolver actividad"
-                        },
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = if (actividad.resuelta) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                    ) {
+                        Text(
+                            text = if (actividad.resuelta) "✅ Realizada · Ver resultado" else "⭐ Pendiente · Resolver",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
         }
