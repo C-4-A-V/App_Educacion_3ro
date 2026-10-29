@@ -71,4 +71,31 @@ class ResultadosActividadViewModel(
             }
         }
     }
+
+    fun generarReporteJson(): String {
+        val estado = _uiState.value
+        val actividad = estado.actividad ?: return "{}"
+        val resultados = estado.resultados
+
+        val sb = StringBuilder()
+        sb.append("{\n")
+        sb.append("  \"actividadId\": ${actividad.id},\n")
+        sb.append("  \"titulo\": \"${actividad.titulo}\",\n")
+        sb.append("  \"asignatura\": \"${actividad.asignaturaId}\",\n")
+        sb.append("  \"totalEstudiantes\": ${resultados.size},\n")
+        sb.append("  \"totalRespondidas\": ${estado.totalRespondidas},\n")
+        sb.append("  \"porcentajeAcierto\": \"${estado.porcentajeAciertoTexto}\",\n")
+        sb.append("  \"estudiantes\": [\n")
+        resultados.forEachIndexed { index, r ->
+            sb.append("    {\n")
+            sb.append("      \"nombre\": \"${r.estudianteNombre}\",\n")
+            sb.append("      \"respondida\": ${r.respondida},\n")
+            sb.append("      \"correcta\": ${r.correcta ?: false},\n")
+            sb.append("      \"alternativaElegida\": ${r.respuestaElegida ?: -1}\n")
+            sb.append("    }${if (index < resultados.size - 1) "," else ""}\n")
+        }
+        sb.append("  ]\n")
+        sb.append("}")
+        return sb.toString()
+    }
 }

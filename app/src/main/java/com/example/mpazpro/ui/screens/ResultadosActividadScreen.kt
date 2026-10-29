@@ -1,5 +1,6 @@
 package com.example.mpazpro.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +25,7 @@ fun ResultadosActividadScreen(
     resultadosViewModel: ResultadosActividadViewModel = viewModel()
 ) {
     val estado by resultadosViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(actividadId) {
         resultadosViewModel.cargar(actividadId)
@@ -37,7 +40,7 @@ fun ResultadosActividadScreen(
     ) {
         item {
             TextButton(onClick = onVolver) {
-                Text("Volver a las actividades")
+                Text("Volver al panel")
             }
         }
 
@@ -73,7 +76,7 @@ fun ResultadosActividadScreen(
             }
         }
 
-        // Tarjeta de Resumen Estadístico para el Docente
+        // Tarjeta de Resumen Estadístico para el Docente con Exportación JSON
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -83,7 +86,7 @@ fun ResultadosActividadScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
                         text = "Resumen del Curso",
@@ -102,6 +105,21 @@ fun ResultadosActividadScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
+
+                    OutlinedButton(
+                        onClick = {
+                            val json = resultadosViewModel.generarReporteJson()
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Reporte Actividad - ${estado.actividad?.titulo}")
+                                putExtra(Intent.EXTRA_TEXT, json)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Exportar reporte JSON"))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Exportar reporte JSON")
+                    }
                 }
             }
         }
