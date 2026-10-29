@@ -20,6 +20,7 @@ import com.example.mpazpro.ui.viewmodel.ResultadosActividadViewModel
 @Composable
 fun ResultadosActividadScreen(
     actividadId: Long,
+    docenteId: Long,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
     resultadosViewModel: ResultadosActividadViewModel = viewModel()
@@ -27,8 +28,11 @@ fun ResultadosActividadScreen(
     val estado by resultadosViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(actividadId) {
-        resultadosViewModel.cargar(actividadId)
+    LaunchedEffect(actividadId, docenteId) {
+        resultadosViewModel.cargar(
+            actividadId = actividadId,
+            docenteId = docenteId
+        )
     }
 
     LazyColumn(
@@ -40,7 +44,7 @@ fun ResultadosActividadScreen(
     ) {
         item {
             TextButton(onClick = onVolver) {
-                Text("Volver al panel")
+                Text("Volver a las actividades")
             }
         }
 
@@ -181,9 +185,22 @@ fun ResultadosActividadScreen(
                         )
 
                         val estadoTexto = when {
-                            !resultado.respondida -> "Pendiente de resolver"
-                            resultado.correcta == true -> "¡Correcta! (Alternativa ${"ABCD"[resultado.respuestaElegida ?: 0]})"
-                            else -> "Incorrecta (Alternativa ${"ABCD"[resultado.respuestaElegida ?: 0]})"
+                            !resultado.respondida ->
+                                "Pendiente de resolver"
+
+                            resultado.correcta == true ->
+                                "¡Correcta! (Alternativa ${
+                                    "ABCD".getOrNull(
+                                        resultado.respuestaElegida ?: -1
+                                    )
+                                })"
+
+                            else ->
+                                "Incorrecta (Alternativa ${
+                                    "ABCD".getOrNull(
+                                        resultado.respuestaElegida ?: -1
+                                    )
+                                })"
                         }
 
                         val colorEstado = when {

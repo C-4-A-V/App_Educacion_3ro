@@ -41,7 +41,7 @@ fun AsignaturasDocenteScreen(
     ) {
         item {
             TextButton(onClick = onVolver) {
-                Text("Volver al curso")
+                Text("Volver")
             }
         }
 

@@ -57,7 +57,9 @@ fun AppNavigation(
                     }
                 },
                 onIngresarEstudiante = {
-                    navController.navigate(Screen.SeleccionEstudiante.route) {
+                    navController.navigate(
+                        Screen.SeleccionEstudiante.route
+                    ) {
                         launchSingleTop = true
                     }
                 }
@@ -72,12 +74,16 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onRegistrar = {
-                    navController.navigate(Screen.RegistroDocente.route) {
+                    navController.navigate(
+                        Screen.RegistroDocente.route
+                    ) {
                         launchSingleTop = true
                     }
                 },
                 onLoginExitoso = {
-                    navController.navigate(Screen.PanelDocente.route) {
+                    navController.navigate(
+                        Screen.PanelDocente.route
+                    ) {
                         popUpTo(Screen.Bienvenida.route) {
                             inclusive = true
                         }
@@ -107,10 +113,22 @@ fun AppNavigation(
                     onCerrarSesion = {
                         loginViewModel.cerrarSesion()
 
-                        navController.navigate(Screen.Bienvenida.route) {
+                        navController.navigate(
+                            Screen.Bienvenida.route
+                        ) {
                             popUpTo(Screen.PanelDocente.route) {
                                 inclusive = true
                             }
+                            launchSingleTop = true
+                        }
+                    },
+                    onAbrirActividades = { cursoId, accion ->
+                        navController.navigate(
+                            Screen.AsignaturasDocente.crearRuta(
+                                cursoId = cursoId,
+                                accion = accion
+                            )
+                        ) {
                             launchSingleTop = true
                         }
                     },
@@ -124,7 +142,9 @@ fun AppNavigation(
                 )
             } else {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -143,7 +163,9 @@ fun AppNavigation(
             )
         ) { entrada ->
             val docente = estadoLogin.docente
-            val cursoId = entrada.arguments?.getLong("cursoId") ?: -1L
+
+            val cursoId = entrada.arguments
+                ?.getLong("cursoId") ?: -1L
 
             if (docente != null) {
                 EstudiantesScreen(
@@ -154,7 +176,9 @@ fun AppNavigation(
                     },
                     onGestionarActividades = {
                         navController.navigate(
-                            Screen.AsignaturasDocente.crearRuta(cursoId)
+                            Screen.AsignaturasDocente.crearRuta(
+                                cursoId
+                            )
                         ) {
                             launchSingleTop = true
                         }
@@ -162,7 +186,9 @@ fun AppNavigation(
                 )
             } else {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -175,13 +201,22 @@ fun AppNavigation(
         composable(
             route = Screen.AsignaturasDocente.route,
             arguments = listOf(
+                navArgument("accion") {
+                    type = NavType.StringType
+                    defaultValue = "actividades"
+                },
                 navArgument("cursoId") {
                     type = NavType.LongType
                 }
             )
         ) { entrada ->
+            val accion = entrada.arguments
+                ?.getString("accion") ?: "actividades"
+
             val docente = estadoLogin.docente
-            val cursoId = entrada.arguments?.getLong("cursoId") ?: -1L
+
+            val cursoId = entrada.arguments
+                ?.getLong("cursoId") ?: -1L
 
             if (docente != null) {
                 AsignaturasDocenteScreen(
@@ -191,19 +226,29 @@ fun AppNavigation(
                         navController.popBackStack()
                     },
                     onAbrirAsignatura = { asignaturaId ->
-                        navController.navigate(
-                            Screen.ActividadesDocente.crearRuta(
+                        val ruta = if (accion == "crear") {
+                            Screen.CrearActividad.crearRuta(
                                 cursoId = cursoId,
                                 asignaturaId = asignaturaId
                             )
-                        ) {
+                        } else {
+                            Screen.ActividadesDocente.crearRuta(
+                                cursoId = cursoId,
+                                asignaturaId = asignaturaId,
+                                accion = accion
+                            )
+                        }
+
+                        navController.navigate(ruta) {
                             launchSingleTop = true
                         }
                     }
                 )
             } else {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -216,6 +261,10 @@ fun AppNavigation(
         composable(
             route = Screen.ActividadesDocente.route,
             arguments = listOf(
+                navArgument("accion") {
+                    type = NavType.StringType
+                    defaultValue = "actividades"
+                },
                 navArgument("cursoId") {
                     type = NavType.LongType
                 },
@@ -232,11 +281,15 @@ fun AppNavigation(
             val asignaturaId = entrada.arguments
                 ?.getString("asignaturaId")
 
-            val asignatura = Asignatura.buscarPorId(asignaturaId)
+            val asignatura = Asignatura.buscarPorId(
+                asignaturaId
+            )
 
             if (docente == null) {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -250,6 +303,8 @@ fun AppNavigation(
             } else {
                 ActividadesDocenteScreen(
                     cursoId = cursoId,
+                    soloResultados = entrada.arguments
+                        ?.getString("accion") == "resultados",
                     docenteId = docente.id,
                     asignatura = asignatura,
                     onVolver = {
@@ -267,7 +322,9 @@ fun AppNavigation(
                     },
                     onVerResultados = { actividadId ->
                         navController.navigate(
-                            Screen.ResultadosActividad.crearRuta(actividadId)
+                            Screen.ResultadosActividad.crearRuta(
+                                actividadId
+                            )
                         ) {
                             launchSingleTop = true
                         }
@@ -295,11 +352,15 @@ fun AppNavigation(
             val asignaturaId = entrada.arguments
                 ?.getString("asignaturaId")
 
-            val asignatura = Asignatura.buscarPorId(asignaturaId)
+            val asignatura = Asignatura.buscarPorId(
+                asignaturaId
+            )
 
             if (docente == null) {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -319,7 +380,17 @@ fun AppNavigation(
                         navController.popBackStack()
                     },
                     onGuardado = {
-                        navController.popBackStack()
+                        navController.navigate(
+                            Screen.ActividadesDocente.crearRuta(
+                                cursoId = cursoId,
+                                asignaturaId = asignatura.id
+                            )
+                        ) {
+                            popUpTo(Screen.CrearActividad.route) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -329,9 +400,13 @@ fun AppNavigation(
             SeleccionEstudianteScreen(
                 accesoViewModel = accesoEstudianteViewModel,
                 onSeleccionar = { estudianteId ->
-                    accesoEstudianteViewModel.seleccionar(estudianteId)
+                    accesoEstudianteViewModel.seleccionar(
+                        estudianteId
+                    )
 
-                    navController.navigate(Screen.InicioEstudiante.route) {
+                    navController.navigate(
+                        Screen.InicioEstudiante.route
+                    ) {
                         popUpTo(Screen.SeleccionEstudiante.route) {
                             inclusive = true
                         }
@@ -353,7 +428,9 @@ fun AppNavigation(
                     progreso = estadoEstudiante.progreso,
                     onAbrirAsignatura = { asignaturaId ->
                         navController.navigate(
-                            Screen.Asignatura.crearRuta(asignaturaId)
+                            Screen.Asignatura.crearRuta(
+                                asignaturaId
+                            )
                         ) {
                             launchSingleTop = true
                         }
@@ -361,7 +438,9 @@ fun AppNavigation(
                     onSalir = {
                         accesoEstudianteViewModel.salir()
 
-                        navController.navigate(Screen.Bienvenida.route) {
+                        navController.navigate(
+                            Screen.Bienvenida.route
+                        ) {
                             popUpTo(Screen.Bienvenida.route) {
                                 inclusive = true
                             }
@@ -371,7 +450,9 @@ fun AppNavigation(
                 )
             } else {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -394,11 +475,15 @@ fun AppNavigation(
             val asignaturaId = entrada.arguments
                 ?.getString("asignaturaId")
 
-            val asignatura = Asignatura.buscarPorId(asignaturaId)
+            val asignatura = Asignatura.buscarPorId(
+                asignaturaId
+            )
 
             if (estudiante == null) {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -444,7 +529,9 @@ fun AppNavigation(
 
             if (estudiante == null) {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -471,11 +558,15 @@ fun AppNavigation(
             )
         ) { entrada ->
             val docente = estadoLogin.docente
-            val actividadId = entrada.arguments?.getLong("actividadId") ?: -1L
+
+            val actividadId = entrada.arguments
+                ?.getLong("actividadId") ?: -1L
 
             if (docente == null) {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Bienvenida.route) {
+                    navController.navigate(
+                        Screen.Bienvenida.route
+                    ) {
                         popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
@@ -483,16 +574,14 @@ fun AppNavigation(
                     }
                 }
             } else {
-                LaunchedEffect(Unit) {
-                    // No need for action
-                }
+                ResultadosActividadScreen(
+                    actividadId = actividadId,
+                    docenteId = docente.id,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
             }
-            ResultadosActividadScreen(
-                actividadId = actividadId,
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
         }
     }
 }

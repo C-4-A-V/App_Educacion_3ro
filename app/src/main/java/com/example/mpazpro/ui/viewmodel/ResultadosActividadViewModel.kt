@@ -12,31 +12,45 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ResultadosActividadViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val database = MpazDatabase.obtenerInstancia(application)
+
     private val actividadDao = database.actividadDao()
     private val intentoDao = database.intentoActividadDao()
 
-    private val _uiState = MutableStateFlow(ResultadosActividadUiState())
+    private val _uiState = MutableStateFlow(
+        ResultadosActividadUiState()
+    )
+
     val uiState = _uiState.asStateFlow()
 
-    private var actividadIdActual: Long? = null
+    private var contextoActual: Pair<Long, Long>? = null
     private var observacionJob: Job? = null
 
-    fun cargar(actividadId: Long) {
-        if (actividadIdActual == actividadId) return
+    fun cargar(
+        actividadId: Long,
+        docenteId: Long
+    ) {
+        val nuevoContexto = actividadId to docenteId
+
+        if (contextoActual == nuevoContexto) return
 
         observacionJob?.cancel()
-        actividadIdActual = actividadId
+        contextoActual = nuevoContexto
         _uiState.value = ResultadosActividadUiState()
 
         observacionJob = viewModelScope.launch {
             try {
-                val actividad = actividadDao.buscarPorId(actividadId)
+                val actividad = actividadDao.buscarPorIdYDocente(
+                    actividadId = actividadId,
+                    docenteId = docenteId
+                )
 
                 if (actividad == null) {
                     _uiState.update {
@@ -48,9 +62,14 @@ class ResultadosActividadViewModel(
                     return@launch
                 }
 
-                _uiState.update { it.copy(actividad = actividad) }
+                _uiState.update {
+                    it.copy(actividad = actividad)
+                }
 
-                intentoDao.observarResultadosActividad(actividadId).collect { resultados ->
+                intentoDao.observarResultadosActividad(
+                    actividadId = actividadId,
+                    docenteId = docenteId
+                ).collect { resultados ->
                     _uiState.update {
                         it.copy(
                             resultados = resultados,
@@ -75,27 +94,43 @@ class ResultadosActividadViewModel(
     fun generarReporteJson(): String {
         val estado = _uiState.value
         val actividad = estado.actividad ?: return "{}"
-        val resultados = estado.resultados
 
-        val sb = StringBuilder()
-        sb.append("{\n")
-        sb.append("  \"actividadId\": ${actividad.id},\n")
-        sb.append("  \"titulo\": \"${actividad.titulo}\",\n")
-        sb.append("  \"asignatura\": \"${actividad.asignaturaId}\",\n")
-        sb.append("  \"totalEstudiantes\": ${resultados.size},\n")
-        sb.append("  \"totalRespondidas\": ${estado.totalRespondidas},\n")
-        sb.append("  \"porcentajeAcierto\": \"${estado.porcentajeAciertoTexto}\",\n")
-        sb.append("  \"estudiantes\": [\n")
-        resultados.forEachIndexed { index, r ->
-            sb.append("    {\n")
-            sb.append("      \"nombre\": \"${r.estudianteNombre}\",\n")
-            sb.append("      \"respondida\": ${r.respondida},\n")
-            sb.append("      \"correcta\": ${r.correcta ?: false},\n")
-            sb.append("      \"alternativaElegida\": ${r.respuestaElegida ?: -1}\n")
-            sb.append("    }${if (index < resultados.size - 1) "," else ""}\n")
+        val filas = JSONArray()
+
+        estado.resultados.forEach { resultado ->
+            filas.put(
+                JSONObject().apply {
+                    put(
+                        "nombre",
+                        resultado.estudianteNombre
+                    )
+
+                    put(
+                        "respondida",
+                        resultado.respondida
+                    )
+
+                    put(
+                        "correcta",
+                        resultado.correcta ?: JSONObject.NULL
+                    )
+
+                    put(
+                        "alternativaElegida",
+                        resultado.respuestaElegida ?: JSONObject.NULL
+                    )
+                }
+            )
         }
-        sb.append("  ]\n")
-        sb.append("}")
-        return sb.toString()
+
+        return JSONObject().apply {
+            put("actividadId", actividad.id)
+            put("titulo", actividad.titulo)
+            put("asignatura", actividad.asignaturaId)
+            put("totalEstudiantes", estado.totalEstudiantes)
+            put("totalRespondidas", estado.totalRespondidas)
+            put("porcentajeAcierto", estado.porcentajeAciertoTexto)
+            put("estudiantes", filas)
+        }.toString(2)
     }
 }

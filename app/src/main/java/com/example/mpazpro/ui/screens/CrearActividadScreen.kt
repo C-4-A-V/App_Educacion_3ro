@@ -45,7 +45,7 @@ fun CrearActividadScreen(
     }
 
     LaunchedEffect(estado.guardado) {
-        if (estado.guardado) {
+        if (estado.guardando == false && estado.guardado) {
             onGuardado()
         }
     }
@@ -63,7 +63,7 @@ fun CrearActividadScreen(
                 onClick = onVolver,
                 enabled = !estado.guardando
             ) {
-                Text("Volver a las actividades")
+                Text("Volver")
             }
         }
 

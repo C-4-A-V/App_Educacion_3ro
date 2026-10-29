@@ -3,15 +3,17 @@ package com.example.mpazpro.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,16 +25,173 @@ fun PanelDocenteScreen(
     docente: DocenteSesion,
     onCerrarSesion: () -> Unit,
     onAbrirCurso: (Long) -> Unit,
+    onAbrirActividades: (Long, String) -> Unit,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel()
 ) {
-    val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
+    val estado by cursosViewModel.uiState
+        .collectAsStateWithLifecycle()
 
     LaunchedEffect(docente.id) {
         cursosViewModel.cargarCursos(docente.id)
     }
 
-    val cursoActual = estado.cursos.firstOrNull()
+    var accion by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
+
+    val tituloAccion = when (accion) {
+        "crear" -> "Agregar actividad"
+        "actividades" -> "Mis actividades"
+        "resultados" -> "Ver resultados"
+        "estudiantes" -> "Agregar estudiantes"
+        else -> "Mis cursos"
+    }
+
+    if (accion == "perfil") {
+        AlertDialog(
+            onDismissRequest = {
+                accion = null
+            },
+            title = {
+                Text("Mi perfil")
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(docente.nombre)
+                    Text(docente.correo)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        accion = null
+                    }
+                ) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    } else if (accion != null) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!estado.guardando) {
+                    accion = null
+                }
+            },
+            title = {
+                Text(tituloAccion)
+            },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        Text("Selecciona un curso")
+                    }
+
+                    if (estado.cargando) {
+                        item {
+                            LinearProgressIndicator(
+                                Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    items(
+                        items = estado.cursos,
+                        key = { it.id }
+                    ) { curso ->
+                        OutlinedButton(
+                            onClick = {
+                                val elegida =
+                                    accion ?: return@OutlinedButton
+
+                                accion = null
+
+                                if (
+                                    elegida in listOf(
+                                        "crear",
+                                        "actividades",
+                                        "resultados"
+                                    )
+                                ) {
+                                    onAbrirActividades(
+                                        curso.id,
+                                        elegida
+                                    )
+                                } else {
+                                    onAbrirCurso(curso.id)
+                                }
+                            },
+                            enabled = !estado.guardando,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(curso.nombre)
+                        }
+                    }
+
+                    if (
+                        !estado.cargando &&
+                        estado.cursos.isEmpty()
+                    ) {
+                        item {
+                            Text(
+                                "Crea tu primer curso para continuar."
+                            )
+                        }
+                    }
+
+                    item {
+                        OutlinedTextField(
+                            value = estado.nombre,
+                            onValueChange = cursosViewModel::actualizarNombre,
+                            label = {
+                                Text("Nombre del nuevo curso")
+                            },
+                            singleLine = true,
+                            enabled = !estado.guardando,
+                            isError = estado.errorNombre != null,
+                            supportingText = {
+                                estado.errorNombre?.let {
+                                    Text(it)
+                                }
+                            }
+                        )
+                    }
+
+                    item {
+                        Button(
+                            onClick = cursosViewModel::crearCurso,
+                            enabled = !estado.cargando &&
+                                !estado.guardando
+                        ) {
+                            Text("Crear curso")
+                        }
+                    }
+
+                    estado.mensaje?.let { mensaje ->
+                        item {
+                            Text(mensaje)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        accion = null
+                    },
+                    enabled = !estado.guardando
+                ) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -42,7 +201,6 @@ fun PanelDocenteScreen(
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Cabecera con Logo y Avatar
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -57,7 +215,9 @@ fun PanelDocenteScreen(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -72,6 +232,7 @@ fun PanelDocenteScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
+
                         Text(
                             text = "3.º Básico",
                             style = MaterialTheme.typography.bodySmall,
@@ -85,7 +246,9 @@ fun PanelDocenteScreen(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = docente.nombre.take(1).uppercase(),
                             style = MaterialTheme.typography.titleMedium,
@@ -96,14 +259,16 @@ fun PanelDocenteScreen(
             }
         }
 
-        // Saludo principal
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = "¡Hola, docente!",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Text(
                     text = "¿Qué deseas hacer hoy?",
                     style = MaterialTheme.typography.bodyLarge,
@@ -112,7 +277,6 @@ fun PanelDocenteScreen(
             }
         }
 
-        // Cuadrícula de 6 Burbujas / Opciones del Menú (Estilo Mockup)
         item {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -121,7 +285,6 @@ fun PanelDocenteScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // 1. Agregar estudiantes
                     MenuBubbleCard(
                         title = "Agregar estudiantes",
                         emoji = "👤+",
@@ -129,11 +292,10 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "estudiantes"
                         }
                     )
 
-                    // 2. Agregar actividad
                     MenuBubbleCard(
                         title = "Agregar actividad",
                         emoji = "📄+",
@@ -141,7 +303,7 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "crear"
                         }
                     )
                 }
@@ -150,7 +312,6 @@ fun PanelDocenteScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // 3. Mis cursos
                     MenuBubbleCard(
                         title = "Mis cursos",
                         emoji = "📖",
@@ -158,11 +319,10 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "cursos"
                         }
                     )
 
-                    // 4. Mis actividades
                     MenuBubbleCard(
                         title = "Mis actividades",
                         emoji = "☑️",
@@ -170,7 +330,7 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "actividades"
                         }
                     )
                 }
@@ -179,7 +339,6 @@ fun PanelDocenteScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // 5. Ver resultados
                     MenuBubbleCard(
                         title = "Ver resultados",
                         emoji = "📊",
@@ -187,11 +346,10 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "resultados"
                         }
                     )
 
-                    // 6. Mi perfil
                     MenuBubbleCard(
                         title = "Mi perfil",
                         emoji = "⚙️",
@@ -199,8 +357,7 @@ fun PanelDocenteScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            // Acción de perfil o curso
-                            cursoActual?.let { onAbrirCurso(it.id) }
+                            accion = "perfil"
                         }
                     )
                 }
@@ -225,9 +382,11 @@ fun PanelDocenteScreen(
             }
         }
 
-        // Botón Cerrar sesión inferior
         item {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
             OutlinedButton(
                 onClick = onCerrarSesion,
                 enabled = !estado.guardando,
@@ -244,8 +403,8 @@ fun PanelDocenteScreen(
 private fun MenuBubbleCard(
     title: String,
     emoji: String,
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
+    containerColor: Color,
+    contentColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -269,11 +428,15 @@ private fun MenuBubbleCard(
                 text = emoji,
                 style = MaterialTheme.typography.headlineLarge
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
     }

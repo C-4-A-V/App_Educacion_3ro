@@ -10,18 +10,22 @@ sealed class Screen(val route: String) {
 
     data object PanelDocente : Screen("panel_docente")
 
-    data object Estudiantes : Screen("curso/{cursoId}/estudiantes") {
+    data object Estudiantes :
+        Screen("curso/{cursoId}/estudiantes") {
 
         fun crearRuta(cursoId: Long): String {
             return "curso/$cursoId/estudiantes"
         }
     }
 
-    data object SeleccionEstudiante : Screen("seleccion_estudiante")
+    data object SeleccionEstudiante :
+        Screen("seleccion_estudiante")
 
-    data object InicioEstudiante : Screen("inicio_estudiante")
+    data object InicioEstudiante :
+        Screen("inicio_estudiante")
 
-    data object Asignatura : Screen("asignatura/{asignaturaId}") {
+    data object Asignatura :
+        Screen("asignatura/{asignaturaId}") {
 
         fun crearRuta(asignaturaId: String): String {
             return "asignatura/$asignaturaId"
@@ -29,21 +33,27 @@ sealed class Screen(val route: String) {
     }
 
     data object AsignaturasDocente :
-        Screen("curso/{cursoId}/asignaturas") {
+        Screen("curso/{cursoId}/asignaturas?accion={accion}") {
 
-        fun crearRuta(cursoId: Long): String {
-            return "curso/$cursoId/asignaturas"
+        fun crearRuta(
+            cursoId: Long,
+            accion: String = "actividades"
+        ): String {
+            return "curso/$cursoId/asignaturas?accion=$accion"
         }
     }
 
     data object ActividadesDocente :
-        Screen("curso/{cursoId}/asignatura/{asignaturaId}/actividades") {
+        Screen(
+            "curso/{cursoId}/asignatura/{asignaturaId}/actividades?accion={accion}"
+        ) {
 
         fun crearRuta(
             cursoId: Long,
-            asignaturaId: String
+            asignaturaId: String,
+            accion: String = "actividades"
         ): String {
-            return "curso/$cursoId/asignatura/$asignaturaId/actividades"
+            return "curso/$cursoId/asignatura/$asignaturaId/actividades?accion=$accion"
         }
     }
 

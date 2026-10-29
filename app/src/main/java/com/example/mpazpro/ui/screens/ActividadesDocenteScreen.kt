@@ -22,6 +22,7 @@ fun ActividadesDocenteScreen(
     onVolver: () -> Unit,
     onCrearActividad: () -> Unit,
     onVerResultados: (Long) -> Unit,
+    soloResultados: Boolean = false,
     modifier: Modifier = Modifier,
     actividadesViewModel: ActividadesDocenteViewModel = viewModel()
 ) {
@@ -45,13 +46,17 @@ fun ActividadesDocenteScreen(
     ) {
         item {
             TextButton(onClick = onVolver) {
-                Text("Volver a las asignaturas")
+                Text("Volver")
             }
         }
 
         item {
             Text(
-                text = "Actividades",
+                text = if (soloResultados) {
+                    "Ver resultados"
+                } else {
+                    "Actividades"
+                },
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -93,12 +98,14 @@ fun ActividadesDocenteScreen(
                 )
             }
 
-            item {
-                Button(
-                    onClick = onCrearActividad,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Crear actividad")
+            if (!soloResultados) {
+                item {
+                    Button(
+                        onClick = onCrearActividad,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Crear actividad")
+                    }
                 }
             }
 
@@ -124,7 +131,11 @@ fun ActividadesDocenteScreen(
                             )
 
                             Text(
-                                text = "Crea la primera actividad para esta asignatura."
+                                text = if (soloResultados) {
+                                    "Todavía no hay actividades en esta asignatura."
+                                } else {
+                                    "Crea la primera actividad para esta asignatura."
+                                }
                             )
                         }
                     }

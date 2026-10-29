@@ -39,12 +39,17 @@ interface IntentoActividadDao {
             i.respuestaElegida AS respuestaElegida
         FROM estudiantes e
         INNER JOIN actividades a ON a.cursoId = e.cursoId
-        LEFT JOIN intentos_actividad i ON i.actividadId = a.id AND i.estudianteId = e.id
+        INNER JOIN cursos c ON c.id = a.cursoId
+        LEFT JOIN intentos_actividad i
+            ON i.actividadId = a.id
+            AND i.estudianteId = e.id
         WHERE a.id = :actividadId
+          AND c.docenteId = :docenteId
         ORDER BY e.nombre COLLATE NOCASE ASC
         """
     )
     fun observarResultadosActividad(
-        actividadId: Long
+        actividadId: Long,
+        docenteId: Long
     ): Flow<List<EstudianteResultadoItem>>
 }
