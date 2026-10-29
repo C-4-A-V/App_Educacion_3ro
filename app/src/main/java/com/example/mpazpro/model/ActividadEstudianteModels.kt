@@ -23,6 +23,7 @@ data class ActividadParaResolver(
 
 data class ActividadesEstudianteUiState(
     val actividades: List<ActividadEstudianteResumen> = emptyList(),
+    val progreso: ProgresoEstudiante = ProgresoEstudiante(),
     val cargando: Boolean = true,
     val mensaje: String? = null
 )
@@ -35,3 +36,19 @@ data class ResolverActividadUiState(
     val enviando: Boolean = false,
     val mensaje: String? = null
 )
+
+data class ProgresoEstudiante(
+    val total: Int = 0,
+    val completadas: Int = 0,
+    val correctas: Int = 0
+) {
+    val porcentaje: Float
+        get() = if (total > 0) (completadas.toFloat() / total.toFloat()).coerceIn(0f, 1f) else 0f
+    val porcentajeTexto: String
+        get() = "${(porcentaje * 100).toInt()}%"
+
+    val porcentajeAciertos: Float
+        get() = if (completadas > 0) (correctas.toFloat() / completadas.toFloat()).coerceIn(0f, 1f) else 0f
+    val porcentajeAciertosTexto: String
+        get() = "${(porcentajeAciertos * 100).toInt()}%"
+}

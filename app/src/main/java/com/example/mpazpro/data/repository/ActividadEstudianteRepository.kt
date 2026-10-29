@@ -21,6 +21,14 @@ class ActividadEstudianteRepository(
         asignaturaId = asignaturaId
     )
 
+    fun observarProgresoAsignatura(
+        estudianteId: Long,
+        asignaturaId: String
+    ) = actividades.observarProgresoAsignatura(
+        estudianteId = estudianteId,
+        asignaturaId = asignaturaId
+    )
+
     suspend fun obtenerActividad(
         estudianteId: Long,
         actividadId: Long

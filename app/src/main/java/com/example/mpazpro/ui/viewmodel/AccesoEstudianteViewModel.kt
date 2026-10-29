@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.repository.EstudianteRepository
 import com.example.mpazpro.model.AccesoEstudianteUiState
+import com.example.mpazpro.model.ProgresoEstudiante
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
@@ -21,11 +23,14 @@ class AccesoEstudianteViewModel(
 
     private val repository = EstudianteRepository(
         estudianteDao = database.estudianteDao(),
-        cursoDao = database.cursoDao()
+        cursoDao = database.cursoDao(),
+        actividadDao = database.actividadDao()
     )
 
     private val _uiState = MutableStateFlow(AccesoEstudianteUiState())
     val uiState = _uiState.asStateFlow()
+
+    private var progresoJob: Job? = null
 
     init {
         cargarPerfiles()
@@ -66,9 +71,20 @@ class AccesoEstudianteViewModel(
         } ?: return
 
         _uiState.update { it.copy(seleccionado = perfil) }
+
+        progresoJob?.cancel()
+        progresoJob = viewModelScope.launch {
+            try {
+                repository.observarProgreso(estudianteId).collect { progreso: ProgresoEstudiante ->
+                    _uiState.update { it.copy(progreso = progreso) }
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     fun salir() {
-        _uiState.update { it.copy(seleccionado = null) }
+        progresoJob?.cancel()
+        progresoJob = null
+        _uiState.update { it.copy(seleccionado = null, progreso = ProgresoEstudiante()) }
     }
 }

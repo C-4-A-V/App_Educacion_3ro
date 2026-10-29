@@ -45,16 +45,29 @@ class ActividadesEstudianteViewModel(
 
         observacionJob = viewModelScope.launch {
             try {
-                repository.observarActividades(
-                    estudianteId = estudianteId,
-                    asignaturaId = asignaturaId
-                ).collect { lista ->
-                    _uiState.update {
-                        it.copy(
-                            actividades = lista,
-                            cargando = false,
-                            mensaje = null
-                        )
+                launch {
+                    repository.observarActividades(
+                        estudianteId = estudianteId,
+                        asignaturaId = asignaturaId
+                    ).collect { lista ->
+                        _uiState.update {
+                            it.copy(
+                                actividades = lista,
+                                cargando = false,
+                                mensaje = null
+                            )
+                        }
+                    }
+                }
+
+                launch {
+                    repository.observarProgresoAsignatura(
+                        estudianteId = estudianteId,
+                        asignaturaId = asignaturaId
+                    ).collect { progreso ->
+                        _uiState.update {
+                            it.copy(progreso = progreso)
+                        }
                     }
                 }
             } catch (cancelacion: CancellationException) {

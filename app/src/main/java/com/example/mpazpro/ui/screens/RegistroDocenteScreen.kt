@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -16,15 +17,24 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpazpro.ui.viewmodel.RegistroDocenteViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun RegistroDocenteScreen(
     onVolver: () -> Unit,
+    onRegistroExitoso: () -> Unit,
     modifier: Modifier = Modifier,
     registroViewModel: RegistroDocenteViewModel = viewModel()
 ) {
     val estado by registroViewModel.uiState.collectAsStateWithLifecycle()
     val editable = !estado.guardando && !estado.registrado
+
+    LaunchedEffect(estado.registrado) {
+        if (estado.registrado) {
+            delay(750)
+            onRegistroExitoso()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -86,7 +96,8 @@ fun RegistroDocenteScreen(
         estado.mensaje?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (estado.registrado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -102,16 +113,10 @@ fun RegistroDocenteScreen(
 
         TextButton(
             onClick = onVolver,
-            enabled = !estado.guardando,
+            enabled = !estado.guardando && !estado.registrado,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                if (estado.registrado) {
-                    "Volver al acceso docente"
-                } else {
-                    "Cancelar y volver"
-                }
-            )
+            Text("Cancelar y volver")
         }
     }
 }

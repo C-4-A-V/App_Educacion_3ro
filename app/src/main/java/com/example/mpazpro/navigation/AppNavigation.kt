@@ -91,6 +91,9 @@ fun AppNavigation(
             RegistroDocenteScreen(
                 onVolver = {
                     navController.popBackStack()
+                },
+                onRegistroExitoso = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -347,6 +350,7 @@ fun AppNavigation(
             if (estudiante != null) {
                 InicioEstudianteScreen(
                     estudiante = estudiante,
+                    progreso = estadoEstudiante.progreso,
                     onAbrirAsignatura = { asignaturaId ->
                         navController.navigate(
                             Screen.Asignatura.crearRuta(asignaturaId)
@@ -368,7 +372,7 @@ fun AppNavigation(
             } else {
                 LaunchedEffect(Unit) {
                     navController.navigate(Screen.Bienvenida.route) {
-                        popUpTo(Screen.Bienvenida.route) {
+                        popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
                         launchSingleTop = true
@@ -395,7 +399,7 @@ fun AppNavigation(
             if (estudiante == null) {
                 LaunchedEffect(Unit) {
                     navController.navigate(Screen.Bienvenida.route) {
-                        popUpTo(Screen.Bienvenida.route) {
+                        popUpTo(Screen.PanelDocente.route) {
                             inclusive = true
                         }
                         launchSingleTop = true
@@ -479,13 +483,16 @@ fun AppNavigation(
                     }
                 }
             } else {
-                ResultadosActividadScreen(
-                    actividadId = actividadId,
-                    onVolver = {
-                        navController.popBackStack()
-                    }
-                )
+                LaunchedEffect(Unit) {
+                    // No need for action
+                }
             }
+            ResultadosActividadScreen(
+                actividadId = actividadId,
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

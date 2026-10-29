@@ -24,7 +24,8 @@ class EstudiantesViewModel(
 
     private val repository = EstudianteRepository(
         estudianteDao = database.estudianteDao(),
-        cursoDao = database.cursoDao()
+        cursoDao = database.cursoDao(),
+        actividadDao = database.actividadDao()
     )
 
     private val fotoStorage = FotoStorage(application)

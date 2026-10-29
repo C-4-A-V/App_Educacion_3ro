@@ -1,12 +1,14 @@
 package com.example.mpazpro.data.repository
 
+import com.example.mpazpro.data.local.ActividadDao
 import com.example.mpazpro.data.local.CursoDao
 import com.example.mpazpro.data.local.EstudianteDao
 import com.example.mpazpro.data.local.EstudianteEntity
 
 class EstudianteRepository(
     private val estudianteDao: EstudianteDao,
-    private val cursoDao: CursoDao
+    private val cursoDao: CursoDao,
+    private val actividadDao: ActividadDao
 ) {
 
     suspend fun obtenerCurso(
@@ -20,6 +22,9 @@ class EstudianteRepository(
     ) = estudianteDao.observarPorCurso(cursoId, docenteId)
 
     fun observarPerfiles() = estudianteDao.observarPerfiles()
+
+    fun observarProgreso(estudianteId: Long) =
+        actividadDao.observarProgresoEstudiante(estudianteId)
 
     suspend fun registrar(
         cursoId: Long,

@@ -67,6 +67,59 @@ fun AsignaturaScreen(
             )
         }
 
+        // Tarjeta de Progreso de la Asignatura
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Progreso en ${asignatura.titulo}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+
+                    LinearProgressIndicator(
+                        progress = { estado.progreso.porcentaje },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp),
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "${estado.progreso.porcentajeTexto} completado",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+
+                        Text(
+                            text = "${estado.progreso.completadas} de ${estado.progreso.total} actividades",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+
+                    if (estado.progreso.completadas > 0) {
+                        Text(
+                            text = "Aciertos: ${estado.progreso.porcentajeAciertosTexto} (${estado.progreso.correctas} correctas)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Text(
                 text = "Mis actividades",

@@ -73,6 +73,39 @@ fun ResultadosActividadScreen(
             }
         }
 
+        // Tarjeta de Resumen Estadístico para el Docente
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Resumen del Curso",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+
+                    Text(
+                        text = "Respondidas: ${estado.totalRespondidas} de ${estado.totalEstudiantes} estudiantes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+
+                    Text(
+                        text = "Aciertos del curso: ${estado.porcentajeAciertoTexto} (${estado.totalCorrectas} correctas · ${estado.totalIncorrectas} incorrectas)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+        }
+
         if (estado.cargando) {
             item {
                 LinearProgressIndicator(
@@ -92,7 +125,7 @@ fun ResultadosActividadScreen(
 
         item {
             Text(
-                text = "Estudiantes: ${estado.resultados.size}",
+                text = "Detalle por estudiante",
                 style = MaterialTheme.typography.titleMedium
             )
         }

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.example.mpazpro.model.ActividadEstudianteResumen
 import com.example.mpazpro.model.ActividadParaResolver
+import com.example.mpazpro.model.ProgresoEstudiante
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -101,4 +102,27 @@ interface ActividadDao {
         actividadId: Long,
         estudianteId: Long
     ): ActividadEntity?
+
+    @Query(
+        """
+        SELECT
+            (SELECT COUNT(*) FROM actividades a INNER JOIN estudiantes e ON e.cursoId = a.cursoId WHERE e.id = :estudianteId) AS total,
+            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId) AS completadas,
+            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId AND correcta = 1) AS correctas
+        """
+    )
+    fun observarProgresoEstudiante(estudianteId: Long): Flow<ProgresoEstudiante>
+
+    @Query(
+        """
+        SELECT
+            (SELECT COUNT(*) FROM actividades a INNER JOIN estudiantes e ON e.cursoId = a.cursoId WHERE e.id = :estudianteId AND a.asignaturaId = :asignaturaId) AS total,
+            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId) AS completadas,
+            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId AND i.correcta = 1) AS correctas
+        """
+    )
+    fun observarProgresoAsignatura(
+        estudianteId: Long,
+        asignaturaId: String
+    ): Flow<ProgresoEstudiante>
 }
