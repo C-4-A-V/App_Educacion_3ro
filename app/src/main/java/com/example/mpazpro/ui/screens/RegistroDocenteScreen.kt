@@ -8,6 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +31,9 @@ fun RegistroDocenteScreen(
 ) {
     val estado by registroViewModel.uiState.collectAsStateWithLifecycle()
     val editable = !estado.guardando && !estado.registrado
+
+    var claveVisible by remember { mutableStateOf(false) }
+    var confirmacionVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(estado.registrado) {
         if (estado.registrado) {
@@ -51,39 +57,89 @@ fun RegistroDocenteScreen(
 
         Text("Utiliza datos ficticios para este proyecto académico.")
 
-        CampoRegistro(
-            etiqueta = "Nombre",
-            valor = estado.nombre,
-            onCambio = registroViewModel::actualizarNombre,
-            error = estado.errores.nombre,
-            habilitado = editable
+        OutlinedTextField(
+            value = estado.nombre,
+            onValueChange = registroViewModel::actualizarNombre,
+            label = { Text("Nombre") },
+            enabled = editable,
+            singleLine = true,
+            isError = estado.errores.nombre != null,
+            supportingText = {
+                estado.errores.nombre?.let { Text(it) }
+            },
+            trailingIcon = {
+                if (estado.errores.nombre != null) {
+                    Icon(
+                        painter = painterResource(android.R.drawable.ic_dialog_alert),
+                        contentDescription = "Error",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
-        CampoRegistro(
-            etiqueta = "Correo electrónico",
-            valor = estado.correo,
-            onCambio = registroViewModel::actualizarCorreo,
-            error = estado.errores.correo,
-            habilitado = editable,
-            tipoTeclado = KeyboardType.Email
+        OutlinedTextField(
+            value = estado.correo,
+            onValueChange = registroViewModel::actualizarCorreo,
+            label = { Text("Correo electrónico") },
+            enabled = editable,
+            singleLine = true,
+            isError = estado.errores.correo != null,
+            supportingText = {
+                estado.errores.correo?.let { Text(it) }
+            },
+            trailingIcon = {
+                if (estado.errores.correo != null) {
+                    Icon(
+                        painter = painterResource(android.R.drawable.ic_dialog_alert),
+                        contentDescription = "Error",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth()
         )
 
-        CampoRegistro(
-            etiqueta = "Contraseña",
-            valor = estado.clave,
-            onCambio = registroViewModel::actualizarClave,
-            error = estado.errores.clave,
-            habilitado = editable,
-            esClave = true
+        OutlinedTextField(
+            value = estado.clave,
+            onValueChange = registroViewModel::actualizarClave,
+            label = { Text("Contraseña") },
+            enabled = editable,
+            singleLine = true,
+            isError = estado.errores.clave != null,
+            supportingText = {
+                estado.errores.clave?.let { Text(it) }
+            },
+            trailingIcon = {
+                IconButton(onClick = { claveVisible = !claveVisible }) {
+                    Text(if (claveVisible) "🙈" else "👁️")
+                }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (claveVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
         )
 
-        CampoRegistro(
-            etiqueta = "Confirmar contraseña",
-            valor = estado.confirmacion,
-            onCambio = registroViewModel::actualizarConfirmacion,
-            error = estado.errores.confirmacion,
-            habilitado = editable,
-            esClave = true
+        OutlinedTextField(
+            value = estado.confirmacion,
+            onValueChange = registroViewModel::actualizarConfirmacion,
+            label = { Text("Confirmar contraseña") },
+            enabled = editable,
+            singleLine = true,
+            isError = estado.errores.confirmacion != null,
+            supportingText = {
+                estado.errores.confirmacion?.let { Text(it) }
+            },
+            trailingIcon = {
+                IconButton(onClick = { confirmacionVisible = !confirmacionVisible }) {
+                    Text(if (confirmacionVisible) "🙈" else "👁️")
+                }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (confirmacionVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
         )
 
         if (estado.guardando) {
@@ -119,52 +175,4 @@ fun RegistroDocenteScreen(
             Text("Cancelar y volver")
         }
     }
-}
-
-// Reutiliza el mismo diseño para los cuatro campos.
-@Composable
-private fun CampoRegistro(
-    etiqueta: String,
-    valor: String,
-    onCambio: (String) -> Unit,
-    error: String?,
-    habilitado: Boolean,
-    esClave: Boolean = false,
-    tipoTeclado: KeyboardType = KeyboardType.Text
-) {
-    OutlinedTextField(
-        value = valor,
-        onValueChange = onCambio,
-        label = { Text(etiqueta) },
-        enabled = habilitado,
-        singleLine = true,
-        isError = error != null,
-        supportingText = {
-            error?.let { Text(it) }
-        },
-        trailingIcon = {
-            if (error != null) {
-                Icon(
-                    painter = painterResource(
-                        android.R.drawable.ic_dialog_alert
-                    ),
-                    contentDescription = "Error en el campo",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = if (esClave) {
-                KeyboardType.Password
-            } else {
-                tipoTeclado
-            }
-        ),
-        visualTransformation = if (esClave) {
-            PasswordVisualTransformation()
-        } else {
-            VisualTransformation.None
-        },
-        modifier = Modifier.fillMaxWidth()
-    )
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -20,11 +21,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,6 +45,7 @@ fun LoginDocenteScreen(
 ) {
     // Observa el estado y actualiza la interfaz cuando cambia.
     val estado by loginViewModel.uiState.collectAsStateWithLifecycle()
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // La navegación ocurre como efecto del resultado del acceso.
     LaunchedEffect(estado.docente) {
@@ -99,7 +105,11 @@ fun LoginDocenteScreen(
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password
             ),
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
             isError = estado.errores.clave != null,
             supportingText = {
                 estado.errores.clave?.let { error ->
@@ -107,8 +117,8 @@ fun LoginDocenteScreen(
                 }
             },
             trailingIcon = {
-                if (estado.errores.clave != null) {
-                    IconoErrorCampo()
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Text(if (passwordVisible) "🙈" else "👁️")
                 }
             },
             modifier = Modifier
