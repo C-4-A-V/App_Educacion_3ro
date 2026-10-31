@@ -6,7 +6,9 @@ data class ActividadEstudianteResumen(
     val id: Long,
     val titulo: String,
     val instrucciones: String,
-    val resuelta: Boolean
+    val resuelta: Boolean,
+    val intentosUsados: Int = 0,
+    val maxIntentos: Int = 1
 )
 
 data class ActividadParaResolver(
@@ -18,7 +20,8 @@ data class ActividadParaResolver(
     val alternativaA: String,
     val alternativaB: String,
     val alternativaC: String,
-    val alternativaD: String
+    val alternativaD: String,
+    val maxIntentos: Int = 1
 )
 
 data class ActividadesEstudianteUiState(
@@ -34,6 +37,8 @@ data class ResolverActividadUiState(
     val intento: IntentoActividadEntity? = null,
     val cargando: Boolean = true,
     val enviando: Boolean = false,
+    val reintentando: Boolean = false,
+    val explicacion: String = "",
     val mensaje: String? = null
 )
 

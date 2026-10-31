@@ -32,11 +32,12 @@ class ResolverActividadViewModel(
 
     fun cargar(
         estudianteId: Long,
-        actividadId: Long
+        actividadId: Long,
+        forzar: Boolean = false
     ) {
         val nuevoContexto = estudianteId to actividadId
 
-        if (contexto == nuevoContexto) return
+        if (contexto == nuevoContexto && !forzar) return
 
         cargaJob?.cancel()
         contexto = nuevoContexto
@@ -63,6 +64,7 @@ class ResolverActividadViewModel(
                     actividad = actividad,
                     respuestaSeleccionada = intento?.respuestaElegida ?: -1,
                     intento = intento,
+                    explicacion = repository.obtenerExplicacion(estudianteId, actividadId),
                     cargando = false
                 )
             } catch (cancelacion: CancellationException) {
@@ -76,6 +78,11 @@ class ResolverActividadViewModel(
         }
     }
 
+    fun recargar() {
+        if (_uiState.value.enviando) return
+        contexto?.let { cargar(it.first, it.second, forzar = true) }
+    }
+
     fun seleccionarRespuesta(indice: Int) {
         val actual = _uiState.value
 
@@ -83,7 +90,7 @@ class ResolverActividadViewModel(
             indice !in 0..3 ||
             actual.cargando ||
             actual.enviando ||
-            actual.intento != null
+            (actual.intento != null && !actual.reintentando)
         ) return
 
         _uiState.update {
@@ -91,6 +98,14 @@ class ResolverActividadViewModel(
                 respuestaSeleccionada = indice,
                 mensaje = null
             )
+        }
+    }
+
+    fun reintentar() {
+        val actual = _uiState.value
+        if (actual.enviando || actual.intento?.finalizada != false) return
+        _uiState.update {
+            it.copy(reintentando = true, respuestaSeleccionada = -1, mensaje = null)
         }
     }
 
@@ -102,7 +117,7 @@ class ResolverActividadViewModel(
         if (
             actual.cargando ||
             actual.enviando ||
-            actual.intento != null
+            (actual.intento != null && !actual.reintentando)
         ) return
 
         if (actual.respuestaSeleccionada !in 0..3) {
@@ -126,12 +141,16 @@ class ResolverActividadViewModel(
                 val intento = repository.enviarRespuesta(
                     estudianteId = estudianteId,
                     actividadId = actividad.id,
-                    respuestaElegida = actual.respuestaSeleccionada
+                    respuestaElegida = actual.respuestaSeleccionada,
+                    intentosPrevios = actual.intento?.numero ?: 0
                 )
 
+                val explicacion = repository.obtenerExplicacion(estudianteId, actividad.id)
                 _uiState.update {
                     it.copy(
                         intento = intento,
+                        explicacion = explicacion,
+                        reintentando = false,
                         respuestaSeleccionada = intento.respuestaElegida,
                         enviando = false
                     )

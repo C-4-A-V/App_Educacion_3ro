@@ -50,7 +50,7 @@ interface EstudianteDao {
             e.cursoId,
             a.asignaturaId,
             COUNT(a.id) AS total,
-            COUNT(i.id) AS completadas,
+            COALESCE(SUM(CASE WHEN i.finalizada = 1 THEN 1 ELSE 0 END), 0) AS completadas,
             COALESCE(
                 SUM(
                     CASE
@@ -66,6 +66,7 @@ interface EstudianteDao {
         LEFT JOIN intentos_actividad i
             ON i.actividadId = a.id
             AND i.estudianteId = e.id
+            AND i.numero = (SELECT MAX(ultimo.numero) FROM intentos_actividad ultimo WHERE ultimo.estudianteId = e.id AND ultimo.actividadId = a.id)
         WHERE c.docenteId = :docenteId
         GROUP BY
             e.id,

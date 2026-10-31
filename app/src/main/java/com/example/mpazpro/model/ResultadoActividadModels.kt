@@ -8,7 +8,8 @@ data class EstudianteResultadoItem(
     val estudianteFoto: String?,
     val respondida: Boolean,
     val correcta: Boolean?,
-    val respuestaElegida: Int?
+    val respuestaElegida: Int?,
+    val intentosUsados: Int = 0
 )
 
 data class ResultadosActividadUiState(
@@ -19,8 +20,8 @@ data class ResultadosActividadUiState(
 ) {
     val totalEstudiantes: Int get() = resultados.size
     val totalRespondidas: Int get() = resultados.count { it.respondida }
-    val totalCorrectas: Int get() = resultados.count { it.correcta == true }
-    val totalIncorrectas: Int get() = resultados.count { it.correcta == false }
+    val totalCorrectas: Int get() = resultados.count { it.respondida && it.correcta == true }
+    val totalIncorrectas: Int get() = resultados.count { it.respondida && it.correcta == false }
     val porcentajeAcierto: Float
         get() = if (totalRespondidas > 0) (totalCorrectas.toFloat() / totalRespondidas.toFloat()).coerceIn(0f, 1f) else 0f
     val porcentajeAciertoTexto: String

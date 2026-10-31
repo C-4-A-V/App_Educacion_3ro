@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.MpazDatabase
+import com.example.mpazpro.data.local.DatosDemostracion
 import com.example.mpazpro.data.repository.DocenteRepository
 import com.example.mpazpro.model.LoginDocenteErrores
 import com.example.mpazpro.model.LoginDocenteUiState
@@ -20,9 +21,8 @@ class LoginDocenteViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository = DocenteRepository(
-        MpazDatabase.obtenerInstancia(application).docenteDao()
-    )
+    private val database = MpazDatabase.obtenerInstancia(application)
+    private val repository = DocenteRepository(database.docenteDao())
 
     private val _uiState = MutableStateFlow(LoginDocenteUiState())
     val uiState = _uiState.asStateFlow()
@@ -68,7 +68,7 @@ class LoginDocenteViewModel(
 
         // Limpiamos espacios accidentales en el correo y clave
         val correoLimpio = actual.correo.trim().lowercase(Locale.ROOT)
-        val claveLimpia = actual.clave.trim()
+        val claveLimpia = actual.clave
 
         val errores = LoginDocenteValidator.validar(
             correoLimpio,
@@ -90,6 +90,7 @@ class LoginDocenteViewModel(
 
         ingresoJob = viewModelScope.launch {
             try {
+                DatosDemostracion.preparar(database)
                 val docente = repository.autenticar(
                     correo = correoLimpio,
                     clave = claveLimpia

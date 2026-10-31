@@ -48,10 +48,19 @@ class ActividadEstudianteRepository(
         }
     }
 
+    suspend fun obtenerExplicacion(estudianteId: Long, actividadId: Long): String {
+        return database.withTransaction {
+            val intento = intentos.buscar(estudianteId, actividadId)
+            if (intento?.finalizada != true) return@withTransaction ""
+            actividades.buscarParaEvaluar(actividadId, estudianteId)?.explicacion.orEmpty()
+        }
+    }
+
     suspend fun enviarRespuesta(
         estudianteId: Long,
         actividadId: Long,
-        respuestaElegida: Int
+        respuestaElegida: Int,
+        intentosPrevios: Int
     ): IntentoActividadEntity {
         require(respuestaElegida in 0..3) {
             "Selecciona una alternativa válida."
@@ -70,9 +79,13 @@ class ActividadEstudianteRepository(
                 actividadId = actividadId
             )
 
-            if (anterior != null) {
+            // El número esperado hace idempotente un envío repetido.
+            if (anterior != null && (anterior.finalizada || anterior.numero != intentosPrevios)) {
                 return@withTransaction anterior
             }
+            check((anterior?.numero ?: 0) == intentosPrevios)
+            val numero = intentosPrevios + 1
+            check(actividad.maxIntentos in listOf(1, 3) && numero <= actividad.maxIntentos)
 
             check(
                 Asignatura.buscarPorId(actividad.asignaturaId) != null &&
@@ -86,7 +99,9 @@ class ActividadEstudianteRepository(
                 actividadId = actividadId,
                 respuestaElegida = respuestaElegida,
                 respuestaCorrecta = actividad.respuestaCorrecta,
-                correcta = respuestaElegida == actividad.respuestaCorrecta
+                correcta = respuestaElegida == actividad.respuestaCorrecta,
+                numero = numero,
+                finalizada = respuestaElegida == actividad.respuestaCorrecta || numero == actividad.maxIntentos
             )
 
             val id = intentos.insertar(intento)

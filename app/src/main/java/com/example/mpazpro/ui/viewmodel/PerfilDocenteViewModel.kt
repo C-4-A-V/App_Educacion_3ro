@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.DocenteEntity
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.media.FotoStorage
+import com.example.mpazpro.data.repository.PreferenciasLectura
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +34,8 @@ class PerfilDocenteViewModel(
         .docenteDao()
 
     private val fotos = FotoStorage(application)
+    private val preferencias = PreferenciasLectura(application)
+    val lectura = preferencias.modoLectura.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _uiState = MutableStateFlow(
         PerfilDocenteUiState()
@@ -76,6 +81,21 @@ class PerfilDocenteViewModel(
                         mensaje = "No se pudo cargar el perfil."
                     )
                 }
+            }
+        }
+    }
+
+    fun cambiarLectura(activado: Boolean) {
+        if (_uiState.value.guardando) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                preferencias.guardar(activado)
+                _uiState.update { it.copy(guardando = false, mensaje = "Preferencia de lectura guardada.") }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                _uiState.update { it.copy(guardando = false, mensaje = "No se pudo guardar la preferencia.") }
             }
         }
     }

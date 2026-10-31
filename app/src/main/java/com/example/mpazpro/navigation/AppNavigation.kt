@@ -58,6 +58,12 @@ fun AppNavigation(
         }
     }
 
+    // Espera la restauración del perfil antes de evaluar rutas protegidas.
+    if (estadoEstudiante.cargando) {
+        androidx.compose.material3.LinearProgressIndicator()
+        return
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Bienvenida.route,
@@ -589,6 +595,7 @@ fun AppNavigation(
                 InicioEstudianteScreen(
                     estudiante = estudiante,
                     progreso = estadoEstudiante.progreso,
+                    mensaje = estadoEstudiante.mensaje,
                     onAbrirAsignatura = { asignaturaId ->
                         navController.navigate(
                             Screen.Asignatura.crearRuta(

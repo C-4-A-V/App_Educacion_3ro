@@ -1,19 +1,19 @@
 package com.example.mpazpro.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.mpazpro.model.Asignatura
-import com.example.mpazpro.model.PerfilEstudiante
-import com.example.mpazpro.model.ProgresoEstudiante
-import com.example.mpazpro.ui.components.ImagenInteligente
+import com.example.mpazpro.model.*
+import com.example.mpazpro.ui.components.PuduExplorador
+import com.example.mpazpro.ui.theme.*
+import com.example.mpazpro.ui.utils.claseAnchoVentana
+import com.example.mpazpro.ui.utils.columnasPara
 
 @Composable
 fun InicioEstudianteScreen(
@@ -21,231 +21,81 @@ fun InicioEstudianteScreen(
     progreso: ProgresoEstudiante,
     onSalir: () -> Unit,
     onAbrirAsignatura: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mensaje: String? = null
 ) {
     BackHandler(onBack = onSalir)
-
-    val asignaturasInfo = listOf(
-        Triple(Asignatura.LENGUAJE, "📖", MaterialTheme.colorScheme.primaryContainer),
-        Triple(Asignatura.MATEMATICA, "🔢", MaterialTheme.colorScheme.secondaryContainer),
-        Triple(Asignatura.CIENCIAS, "🌱", MaterialTheme.colorScheme.tertiaryContainer),
-        Triple(Asignatura.HISTORIA, "🌍", MaterialTheme.colorScheme.surfaceVariant)
-    )
-
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        contentPadding = PaddingValues(vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Cabecera con saludo
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    val columnas = columnasPara(claseAnchoVentana())
+    val avance by animateFloatAsState(progreso.porcentaje, label = "Progreso de la aventura")
+    AventuraTheme {
+        Surface(modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columnas),
+                state = rememberLazyGridState(),
+                contentPadding = PaddingValues(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "MPAZ PRO 3.º",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "¡Vamos a aprender!",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(52.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = estudiante.nombre.take(1).uppercase(),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Column {
+                        Text("MPAZ PRO · 3.º básico", style = MaterialTheme.typography.labelLarge)
+                        Text("¡Hola, ${estudiante.nombre}!", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                     }
                 }
-            }
-        }
-
-        // Subtítulo
-        item {
-            Text(
-                text = "Elige una asignatura para comenzar.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
-
-        // Tarjeta de Gamificación (Estrellas Ganadas)
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                ),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.fillMaxWidth(0.72f)
+                if (mensaje != null) {
+                    item(span = { GridItemSpan(maxLineSpan) }) { Text(mensaje, color = MaterialTheme.colorScheme.error) }
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        shape = RoundedCornerShape(28.dp)
                     ) {
-                        Text(
-                            text = "Tus Estrellas Ganadas",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Text(
-                            text = if (progreso.correctas > 0) "¡Excelente trabajo! Sigue así 🌟" else "¡Responde actividades correctamente para ganar estrellas!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
+                        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            PuduExplorador(Modifier.size(76.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("¿Qué descubriremos hoy?", style = MaterialTheme.typography.titleMedium)
+                                Text("¡Vamos a aprender con tu pudú explorador!", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                     }
-
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Card(shape = RoundedCornerShape(24.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("⭐ ${progreso.correctas} estrellas · Tu aventura", style = MaterialTheme.typography.titleMedium)
+                            LinearProgressIndicator(progress = { avance }, modifier = Modifier.fillMaxWidth().height(10.dp))
+                            Text("${progreso.completadas} de ${progreso.total} actividades completadas")
                             Text(
-                                text = "⭐ ${progreso.correctas}",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onTertiary
+                                when {
+                                    progreso.total == 0 -> "Tu docente pronto preparará nuevas aventuras."
+                                    progreso.completadas == progreso.total -> "¡Completaste todas tus actividades! Gran trabajo."
+                                    progreso.completadas > 0 -> "¡Cada actividad que terminas es un nuevo paso!"
+                                    else -> "Elige una asignatura y comienza a explorar."
+                                }, style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
                 }
-            }
-        }
-
-        // Tarjeta de Progreso General
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Tu Progreso General",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    LinearProgressIndicator(
-                        progress = { progreso.porcentaje },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp),
-                    )
-
-                    Row(
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text("Elige tu próxima aventura", style = MaterialTheme.typography.titleLarge)
+                }
+                items(Asignatura.entries, key = { it.id }) { asignatura ->
+                    Card(
+                        onClick = { onAbrirAsignatura(asignatura.id) },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = asignatura.colorAventura(), contentColor = asignatura.textoAventura())
                     ) {
-                        Text(
-                            text = "${progreso.porcentajeTexto} completado",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-
-                        Text(
-                            text = "${progreso.completadas} de ${progreso.total} actividades",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Text(
-                text = "Asignaturas de 3.º Básico",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        // Tarjetas de Asignaturas (Estilo Asignatura Grid / Tarjetas)
-        asignaturasInfo.forEach { (asignatura, emoji, containerColor) ->
-            item(key = asignatura.id) {
-                Card(
-                    onClick = {
-                        onAbrirAsignatura(asignatura.id)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = containerColor
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = emoji,
-                            style = MaterialTheme.typography.headlineLarge
-                        )
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = asignatura.titulo,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-
-                            Text(
-                                text = asignatura.descripcion,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(asignatura.iconoAventura, style = MaterialTheme.typography.headlineMedium)
+                            Text(asignatura.titulo, style = MaterialTheme.typography.titleLarge)
+                            Text(asignatura.descripcion, style = MaterialTheme.typography.bodyLarge)
                         }
-
-                        Text(
-                            text = "→",
-                            style = MaterialTheme.typography.titleLarge
-                        )
                     }
                 }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedButton(
-                onClick = onSalir,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Text("Salir de mi perfil")
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    OutlinedButton(onSalir, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Salir de mi perfil") }
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,7 +34,7 @@ fun EstudiantesScreen(
 
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize().anchoFormulario()
             .imePadding()
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(vertical = 24.dp),

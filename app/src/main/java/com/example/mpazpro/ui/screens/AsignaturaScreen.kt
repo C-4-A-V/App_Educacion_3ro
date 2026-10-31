@@ -1,8 +1,12 @@
 package com.example.mpazpro.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.items
+import com.example.mpazpro.ui.utils.claseAnchoVentana
+import com.example.mpazpro.ui.utils.columnasPara
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mpazpro.ui.theme.*
 import com.example.mpazpro.model.Asignatura
 import com.example.mpazpro.model.PerfilEstudiante
 import com.example.mpazpro.ui.viewmodel.ActividadesEstudianteViewModel
@@ -35,28 +40,32 @@ fun AsignaturaScreen(
         )
     }
 
-    LazyColumn(
+    AventuraTheme {
+    Surface(modifier.fillMaxSize()) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columnasPara(claseAnchoVentana())),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             TextButton(onClick = onVolver) {
                 Text("← Volver a mis asignaturas")
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
-                text = asignatura.titulo,
+                text = "${asignatura.iconoAventura} ${asignatura.titulo}",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
                 text = asignatura.descripcion,
                 style = MaterialTheme.typography.bodyLarge
@@ -64,11 +73,12 @@ fun AsignaturaScreen(
         }
 
         // Tarjeta de Progreso de la Asignatura
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = asignatura.colorAventura(),
+                    contentColor = asignatura.textoAventura()
                 ),
                 shape = RoundedCornerShape(28.dp)
             ) {
@@ -79,7 +89,7 @@ fun AsignaturaScreen(
                     Text(
                         text = "Progreso en ${asignatura.titulo}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = asignatura.textoAventura()
                     )
 
                     LinearProgressIndicator(
@@ -89,20 +99,20 @@ fun AsignaturaScreen(
                             .height(10.dp),
                     )
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
                             text = "${estado.progreso.porcentajeTexto} completado",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = asignatura.textoAventura()
                         )
 
                         Text(
                             text = "${estado.progreso.completadas} de ${estado.progreso.total} actividades",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = asignatura.textoAventura()
                         )
                     }
 
@@ -110,14 +120,14 @@ fun AsignaturaScreen(
                         Text(
                             text = "Aciertos: ${estado.progreso.porcentajeAciertosTexto} (${estado.progreso.correctas} correctas)",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = asignatura.textoAventura()
                         )
                     }
                 }
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
                 text = "Actividades disponibles",
                 style = MaterialTheme.typography.titleLarge,
@@ -126,7 +136,7 @@ fun AsignaturaScreen(
         }
 
         if (estado.cargando) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -134,7 +144,7 @@ fun AsignaturaScreen(
         }
 
         estado.mensaje?.let { mensaje ->
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     text = mensaje,
                     color = MaterialTheme.colorScheme.error
@@ -147,7 +157,7 @@ fun AsignaturaScreen(
             estado.mensaje == null &&
             estado.actividades.isEmpty()
         ) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp)
@@ -180,7 +190,8 @@ fun AsignaturaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = asignatura.colorAventura(),
+                        contentColor = asignatura.textoAventura()
                 )
             ) {
                 Column(
@@ -202,7 +213,12 @@ fun AsignaturaScreen(
                         color = if (actividad.resuelta) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
                     ) {
                         Text(
-                            text = if (actividad.resuelta) "✅ Realizada · Ver resultado" else "⭐ Pendiente · Resolver",
+                            text = when {
+                                actividad.resuelta -> "✓ Completada · Ver resultado"
+                                actividad.intentosUsados > 0 -> "Continuar · ${actividad.maxIntentos - actividad.intentosUsados} oportunidades"
+                                actividad.maxIntentos == 3 -> "Práctica · Comenzar"
+                                else -> "Evaluación · Comenzar"
+                            },
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -211,5 +227,7 @@ fun AsignaturaScreen(
                 }
             }
         }
+    }
+    }
     }
 }

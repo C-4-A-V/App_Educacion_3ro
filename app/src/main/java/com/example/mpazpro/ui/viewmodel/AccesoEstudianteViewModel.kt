@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.MpazDatabase
+import com.example.mpazpro.data.local.DatosDemostracion
 import com.example.mpazpro.data.repository.EstudianteRepository
 import com.example.mpazpro.model.AccesoEstudianteUiState
 import com.example.mpazpro.model.ProgresoEstudiante
@@ -16,7 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AccesoEstudianteViewModel(
-    application: Application
+    application: Application,
+    private val savedState: androidx.lifecycle.SavedStateHandle
 ) : AndroidViewModel(application) {
 
     private val database = MpazDatabase.obtenerInstancia(application)
@@ -39,17 +41,19 @@ class AccesoEstudianteViewModel(
     private fun cargarPerfiles() {
         viewModelScope.launch {
             try {
+                DatosDemostracion.preparar(database)
                 repository.observarPerfiles().collect { perfiles ->
                     _uiState.update { actual ->
                         actual.copy(
                             perfiles = perfiles,
                             cargando = false,
                             // Actualiza el perfil elegido si cambian sus datos.
-                            seleccionado = actual.seleccionado?.let { elegido ->
-                                perfiles.find { it.id == elegido.id }
-                            },
+                            seleccionado = perfiles.find { it.id == (actual.seleccionado?.id ?: savedState.get<Long>("estudianteId")) },
                             mensaje = null
                         )
+                    }
+                    if (progresoJob == null) {
+                        _uiState.value.seleccionado?.let { seleccionar(it.id) }
                     }
                 }
             } catch (cancelacion: CancellationException) {
@@ -70,7 +74,8 @@ class AccesoEstudianteViewModel(
             it.id == estudianteId
         } ?: return
 
-        _uiState.update { it.copy(seleccionado = perfil) }
+        savedState["estudianteId"] = estudianteId
+        _uiState.update { it.copy(seleccionado = perfil, progreso = ProgresoEstudiante(), mensaje = null) }
 
         progresoJob?.cancel()
         progresoJob = viewModelScope.launch {
@@ -78,11 +83,16 @@ class AccesoEstudianteViewModel(
                 repository.observarProgreso(estudianteId).collect { progreso: ProgresoEstudiante ->
                     _uiState.update { it.copy(progreso = progreso) }
                 }
-            } catch (_: Exception) {}
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                _uiState.update { it.copy(mensaje = "No se pudo actualizar tu progreso. Vuelve a seleccionar tu perfil.") }
+            }
         }
     }
 
     fun salir() {
+        savedState.remove<Long>("estudianteId")
         progresoJob?.cancel()
         progresoJob = null
         _uiState.update { it.copy(seleccionado = null, progreso = ProgresoEstudiante()) }

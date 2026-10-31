@@ -1,5 +1,6 @@
 package com.example.mpazpro.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -37,6 +38,11 @@ data class ActividadEntity(
 
     // 0 = A, 1 = B, 2 = C, 3 = D.
     val respuestaCorrecta: Int,
+
+    @ColumnInfo(defaultValue = "1")
+    val maxIntentos: Int = 1,
+    @ColumnInfo(defaultValue = "''")
+    val explicacion: String = "",
 
     val creadaEn: Long = System.currentTimeMillis()
 )

@@ -9,9 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,8 +33,8 @@ fun RegistroDocenteScreen(
     val estado by registroViewModel.uiState.collectAsStateWithLifecycle()
     val editable = !estado.guardando && !estado.registrado
 
-    var claveVisible by remember { mutableStateOf(false) }
-    var confirmacionVisible by remember { mutableStateOf(false) }
+    var claveVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmacionVisible by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(estado.registrado) {
         if (estado.registrado) {
@@ -44,7 +45,7 @@ fun RegistroDocenteScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize().anchoFormulario()
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
@@ -113,8 +114,8 @@ fun RegistroDocenteScreen(
                 estado.errores.clave?.let { Text(it) }
             },
             trailingIcon = {
-                IconButton(onClick = { claveVisible = !claveVisible }) {
-                    Text(if (claveVisible) "🙈" else "👁️")
+                com.example.mpazpro.ui.components.VisibilidadClave(claveVisible, estado.errores.clave != null) {
+                    claveVisible = !claveVisible
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -133,8 +134,8 @@ fun RegistroDocenteScreen(
                 estado.errores.confirmacion?.let { Text(it) }
             },
             trailingIcon = {
-                IconButton(onClick = { confirmacionVisible = !confirmacionVisible }) {
-                    Text(if (confirmacionVisible) "🙈" else "👁️")
+                com.example.mpazpro.ui.components.VisibilidadClave(confirmacionVisible, estado.errores.confirmacion != null) {
+                    confirmacionVisible = !confirmacionVisible
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),

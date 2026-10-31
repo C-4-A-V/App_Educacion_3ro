@@ -12,6 +12,9 @@ interface CursoDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertar(curso: CursoEntity): Long
 
+    @Query("SELECT * FROM cursos WHERE docenteId = :docenteId ORDER BY id LIMIT 1")
+    suspend fun buscarPrimero(docenteId: Long): CursoEntity?
+
     // Solo devuelve los cursos del docente indicado.
     // Flow actualiza la lista cuando cambia la tabla.
     @Query(

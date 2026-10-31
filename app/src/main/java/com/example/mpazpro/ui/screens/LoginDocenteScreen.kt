@@ -22,10 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,7 +46,7 @@ fun LoginDocenteScreen(
 ) {
     // Observa el estado y actualiza la interfaz cuando cambia.
     val estado by loginViewModel.uiState.collectAsStateWithLifecycle()
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     // La navegación ocurre como efecto del resultado del acceso.
     LaunchedEffect(estado.docente) {
@@ -59,7 +60,7 @@ fun LoginDocenteScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize().anchoFormulario()
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
@@ -117,8 +118,8 @@ fun LoginDocenteScreen(
                 }
             },
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Text(if (passwordVisible) "🙈" else "👁️")
+                com.example.mpazpro.ui.components.VisibilidadClave(passwordVisible, estado.errores.clave != null) {
+                    passwordVisible = !passwordVisible
                 }
             },
             modifier = Modifier

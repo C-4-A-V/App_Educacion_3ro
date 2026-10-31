@@ -26,6 +26,17 @@ class FotoStorage(context: Context) {
         )
     }
 
+    suspend fun descartarTemporal(uri: Uri) = withContext(Dispatchers.IO) {
+        borrarTemporal(uri)
+    }
+
+    private fun borrarTemporal(uri: Uri) {
+        if (uri.authority != "${appContext.packageName}.fileprovider") return
+        val carpeta = File(appContext.cacheDir, "camara").canonicalFile
+        val archivo = File(carpeta, uri.lastPathSegment ?: return).canonicalFile
+        if (archivo.parentFile == carpeta) archivo.delete()
+    }
+
     // Copia el contenido mientras tenemos permiso para leer el URI.
     // La foto permanente no dependerá de permisos futuros de galería.
     suspend fun importar(uri: Uri): String = withContext(Dispatchers.IO) {
@@ -72,6 +83,8 @@ class FotoStorage(context: Context) {
         } catch (error: Exception) {
             destino.delete()
             throw error
+        } finally {
+            borrarTemporal(uri)
         }
     }
 }

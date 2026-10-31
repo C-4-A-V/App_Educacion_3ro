@@ -22,7 +22,7 @@ import com.example.mpazpro.ui.components.ImagenInteligente
 import com.example.mpazpro.ui.viewmodel.CursosViewModel
 
 @Composable
-fun PanelDocenteScreen(
+internal fun PanelDocenteContenido(
     docente: DocenteSesion,
     onCerrarSesion: () -> Unit,
     onAbrirCurso: (Long) -> Unit,
@@ -142,6 +142,9 @@ fun PanelDocenteScreen(
                             enabled = !estado.guardando,
 
                             isError = estado.errorNombre != null,
+                            trailingIcon = {
+                                if (estado.errorNombre != null) Icon(painterResource(android.R.drawable.ic_dialog_alert), "Error en el nombre del curso")
+                            },
 
                             supportingText = {
                                 estado.errorNombre?.let {

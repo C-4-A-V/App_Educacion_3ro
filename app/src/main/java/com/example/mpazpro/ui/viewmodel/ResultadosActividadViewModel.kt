@@ -105,6 +105,7 @@ class ResultadosActividadViewModel(
                         resultado.estudianteNombre
                     )
 
+                    put("intentosUsados", resultado.intentosUsados)
                     put(
                         "respondida",
                         resultado.respondida
@@ -125,6 +126,7 @@ class ResultadosActividadViewModel(
 
         return JSONObject().apply {
             put("actividadId", actividad.id)
+            put("tipo", if (actividad.maxIntentos == 3) "practica" else "evaluacion")
             put("titulo", actividad.titulo)
             put("asignatura", actividad.asignaturaId)
             put("totalEstudiantes", estado.totalEstudiantes)

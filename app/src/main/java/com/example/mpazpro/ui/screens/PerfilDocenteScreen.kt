@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mpazpro.ui.components.SelectorFotoEstudiante
@@ -17,6 +18,7 @@ fun PerfilDocenteScreen(
     onVolver: () -> Unit
 ) {
     val estado by perfilViewModel.uiState.collectAsStateWithLifecycle()
+    val lectura by perfilViewModel.lectura.collectAsStateWithLifecycle()
 
     LaunchedEffect(docenteId) {
         perfilViewModel.cargar(docenteId)
@@ -24,7 +26,7 @@ fun PerfilDocenteScreen(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().anchoFormulario()
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -46,6 +48,20 @@ fun PerfilDocenteScreen(
             item {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text("Lectura cómoda", style = MaterialTheme.typography.titleMedium)
+                    Text("Aumenta el texto de la app. Se conserva al volver a abrirla.")
+                }
+                Switch(
+                    checked = lectura,
+                    onCheckedChange = perfilViewModel::cambiarLectura,
+                    enabled = !estado.guardando
                 )
             }
         }
@@ -92,8 +108,8 @@ fun PerfilDocenteScreen(
         }
 
         estado.mensaje?.let { mensaje ->
-            item {
-                Text(mensaje)
+            item(key = "mensaje_$mensaje") {
+                com.example.mpazpro.ui.components.FeedbackAnimado { Text(mensaje) }
             }
         }
     }

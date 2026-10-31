@@ -61,7 +61,9 @@ class ActividadRepository(
                     alternativaB = datos.alternativas[1],
                     alternativaC = datos.alternativas[2],
                     alternativaD = datos.alternativas[3],
-                    respuestaCorrecta = datos.respuestaCorrecta
+                    respuestaCorrecta = datos.respuestaCorrecta,
+                    maxIntentos = datos.maxIntentos,
+                    explicacion = datos.explicacion
                 )
             )
         }

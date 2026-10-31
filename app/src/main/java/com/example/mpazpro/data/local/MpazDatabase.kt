@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ActividadEntity::class,
         IntentoActividadEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -172,6 +172,17 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE actividades ADD COLUMN maxIntentos INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE actividades ADD COLUMN explicacion TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE intentos_actividad ADD COLUMN numero INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE intentos_actividad ADD COLUMN finalizada INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("DROP INDEX index_intentos_actividad_estudianteId_actividadId")
+                db.execSQL("CREATE UNIQUE INDEX index_intentos_actividad_estudianteId_actividadId_numero ON intentos_actividad(estudianteId, actividadId, numero)")
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -185,6 +196,7 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_3_4,
                         MIGRATION_4_5,
                         MIGRATION_5_6,
+                        MIGRATION_6_7,
                     )
                     .build()
                     .also { instancia = it }

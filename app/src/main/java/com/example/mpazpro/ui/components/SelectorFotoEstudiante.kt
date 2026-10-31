@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.mpazpro.data.media.FotoStorage
+import kotlinx.coroutines.launch
 
 @Composable
 fun SelectorFotoEstudiante(
@@ -30,6 +31,7 @@ fun SelectorFotoEstudiante(
 ) {
     val context = LocalContext.current
     val almacenamiento = remember(context) { FotoStorage(context) }
+    val scope = rememberCoroutineScope()
 
     var capturaUri by rememberSaveable { mutableStateOf<String?>(null) }
     var esperandoResultado by rememberSaveable { mutableStateOf(false) }
@@ -44,6 +46,8 @@ fun SelectorFotoEstudiante(
 
         if (aceptada && uri != null) {
             onSeleccion(uri)
+        } else if (uri != null) {
+            scope.launch { almacenamiento.descartarTemporal(uri) }
         }
         // Si cancela, conservamos la fotografía anterior.
     }

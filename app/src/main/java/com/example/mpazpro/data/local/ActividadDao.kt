@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ActividadDao {
 
+    @Query("SELECT id FROM actividades WHERE cursoId = :cursoId AND asignaturaId = :asignaturaId AND titulo = :titulo LIMIT 1")
+    suspend fun buscarPredeterminada(cursoId: Long, asignaturaId: String, titulo: String): Long?
+
     @Insert
     suspend fun insertar(
         actividad: ActividadEntity
@@ -63,12 +66,15 @@ interface ActividadDao {
             a.id,
             a.titulo,
             a.instrucciones,
-            (i.id IS NOT NULL) AS resuelta
+            COALESCE(i.finalizada, 0) AS resuelta,
+            COALESCE(i.numero, 0) AS intentosUsados,
+            a.maxIntentos
         FROM actividades a
         INNER JOIN estudiantes e ON e.cursoId = a.cursoId
         LEFT JOIN intentos_actividad i
             ON i.actividadId = a.id
             AND i.estudianteId = e.id
+            AND i.numero = (SELECT MAX(ultimo.numero) FROM intentos_actividad ultimo WHERE ultimo.estudianteId = e.id AND ultimo.actividadId = a.id)
         WHERE e.id = :estudianteId
           AND a.asignaturaId = :asignaturaId
         ORDER BY a.creadaEn DESC, a.id DESC
@@ -90,7 +96,8 @@ interface ActividadDao {
             a.alternativaA,
             a.alternativaB,
             a.alternativaC,
-            a.alternativaD
+            a.alternativaD,
+            a.maxIntentos
         FROM actividades a
         INNER JOIN estudiantes e ON e.cursoId = a.cursoId
         WHERE a.id = :actividadId
@@ -122,8 +129,8 @@ interface ActividadDao {
         """
         SELECT
             (SELECT COUNT(*) FROM actividades a INNER JOIN estudiantes e ON e.cursoId = a.cursoId WHERE e.id = :estudianteId) AS total,
-            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId) AS completadas,
-            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId AND correcta = 1) AS correctas
+            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId AND finalizada = 1) AS completadas,
+            (SELECT COUNT(*) FROM intentos_actividad WHERE estudianteId = :estudianteId AND finalizada = 1 AND correcta = 1) AS correctas
         """
     )
     fun observarProgresoEstudiante(estudianteId: Long): Flow<ProgresoEstudiante>
@@ -132,8 +139,8 @@ interface ActividadDao {
         """
         SELECT
             (SELECT COUNT(*) FROM actividades a INNER JOIN estudiantes e ON e.cursoId = a.cursoId WHERE e.id = :estudianteId AND a.asignaturaId = :asignaturaId) AS total,
-            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId) AS completadas,
-            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId AND i.correcta = 1) AS correctas
+            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId AND i.finalizada = 1) AS completadas,
+            (SELECT COUNT(*) FROM intentos_actividad i INNER JOIN actividades a ON a.id = i.actividadId WHERE i.estudianteId = :estudianteId AND a.asignaturaId = :asignaturaId AND i.finalizada = 1 AND i.correcta = 1) AS correctas
         """
     )
     fun observarProgresoAsignatura(

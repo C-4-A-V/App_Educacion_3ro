@@ -1,8 +1,12 @@
 package com.example.mpazpro.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.items
+import com.example.mpazpro.ui.utils.claseAnchoVentana
+import com.example.mpazpro.ui.utils.columnasPara
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -11,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.mpazpro.ui.theme.AventuraTheme
 import com.example.mpazpro.ui.components.ImagenInteligente
 import com.example.mpazpro.ui.viewmodel.AccesoEstudianteViewModel
 
@@ -23,20 +28,24 @@ fun SeleccionEstudianteScreen(
 ) {
     val estado by accesoViewModel.uiState.collectAsStateWithLifecycle()
 
-    LazyColumn(
+    AventuraTheme {
+    Surface(modifier.fillMaxSize()) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columnasPara(claseAnchoVentana())),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             TextButton(onClick = onVolver) {
                 Text("Volver al inicio")
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "¿Quién va a aprender? 🎒",
@@ -46,13 +55,13 @@ fun SeleccionEstudianteScreen(
                 Text(
                     text = "Selecciona tu perfil para comenzar.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
         if (estado.cargando) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -60,7 +69,7 @@ fun SeleccionEstudianteScreen(
         }
 
         estado.mensaje?.let { mensaje ->
-            item { Text(mensaje) }
+            item(span = { GridItemSpan(maxLineSpan) }) { Text(mensaje) }
         }
 
         if (
@@ -68,7 +77,7 @@ fun SeleccionEstudianteScreen(
             estado.mensaje == null &&
             estado.perfiles.isEmpty()
         ) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -122,13 +131,15 @@ fun SeleccionEstudianteScreen(
                         )
 
                         Text(
-                            text = "ID: E-${perfil.id}",
+                            text = "Toca para comenzar →",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
         }
+    }
+    }
     }
 }

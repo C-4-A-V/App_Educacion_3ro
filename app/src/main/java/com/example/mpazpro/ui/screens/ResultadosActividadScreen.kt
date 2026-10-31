@@ -185,6 +185,9 @@ fun ResultadosActividadScreen(
                         )
 
                         val estadoTexto = when {
+                            !resultado.respondida && resultado.intentosUsados > 0 ->
+                                "Práctica en curso"
+
                             !resultado.respondida ->
                                 "Pendiente de resolver"
 
@@ -202,6 +205,11 @@ fun ResultadosActividadScreen(
                                     )
                                 })"
                         }
+
+                        Text(
+                            text = "Intentos usados: ${resultado.intentosUsados}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
 
                         val colorEstado = when {
                             !resultado.respondida -> MaterialTheme.colorScheme.outline
