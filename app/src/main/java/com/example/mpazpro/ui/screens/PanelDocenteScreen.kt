@@ -13,11 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpazpro.model.DocenteSesion
+import com.example.mpazpro.ui.components.ImagenInteligente
 import com.example.mpazpro.ui.viewmodel.CursosViewModel
 
 @Composable
@@ -26,77 +27,50 @@ fun PanelDocenteScreen(
     onCerrarSesion: () -> Unit,
     onAbrirCurso: (Long) -> Unit,
     onAbrirActividades: (Long, String) -> Unit,
+    onAbrirPerfil: () -> Unit,
+    onAbrirResultados: () -> Unit,
+    fotoRuta: String? = null,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel()
 ) {
-    val estado by cursosViewModel.uiState
-        .collectAsStateWithLifecycle()
+    val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
+
+    var accion by rememberSaveable(docente.id) {
+        mutableStateOf<String?>(null)
+    }
 
     LaunchedEffect(docente.id) {
         cursosViewModel.cargarCursos(docente.id)
     }
 
-    var accion by rememberSaveable {
-        mutableStateOf<String?>(null)
-    }
-
-    val tituloAccion = when (accion) {
-        "crear" -> "Agregar actividad"
-        "actividades" -> "Mis actividades"
-        "resultados" -> "Ver resultados"
-        "estudiantes" -> "Agregar estudiantes"
-        else -> "Mis cursos"
-    }
-
-    if (accion == "perfil") {
-        AlertDialog(
-            onDismissRequest = {
-                accion = null
-            },
-            title = {
-                Text("Mi perfil")
-            },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(docente.nombre)
-                    Text(docente.correo)
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        accion = null
-                    }
-                ) {
-                    Text("Cerrar")
-                }
-            }
-        )
-    } else if (accion != null) {
+    // Selección y creación de cursos.
+    if (accion != null) {
         AlertDialog(
             onDismissRequest = {
                 if (!estado.guardando) {
                     accion = null
                 }
             },
+
             title = {
-                Text(tituloAccion)
+                Text(
+                    text = when (accion) {
+                        "actividades" -> "Actividades · elige un curso"
+                        "estudiantes" -> "Agregar estudiantes"
+                        else -> "Mis cursos"
+                    }
+                )
             },
+
             text = {
                 LazyColumn(
                     modifier = Modifier.heightIn(max = 420.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    item {
-                        Text("Selecciona un curso")
-                    }
-
                     if (estado.cargando) {
                         item {
                             LinearProgressIndicator(
-                                Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
@@ -107,28 +81,26 @@ fun PanelDocenteScreen(
                     ) { curso ->
                         OutlinedButton(
                             onClick = {
-                                val elegida =
-                                    accion ?: return@OutlinedButton
+                                val elegida = accion
+                                    ?: return@OutlinedButton
 
                                 accion = null
 
-                                if (
-                                    elegida in listOf(
-                                        "crear",
-                                        "actividades",
-                                        "resultados"
-                                    )
-                                ) {
+                                if (elegida == "actividades") {
                                     onAbrirActividades(
                                         curso.id,
-                                        elegida
+                                        "actividades"
                                     )
                                 } else {
                                     onAbrirCurso(curso.id)
                                 }
                             },
+
                             enabled = !estado.guardando,
-                            modifier = Modifier.fillMaxWidth()
+
+                            modifier = Modifier.fillMaxWidth(),
+
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(curso.nombre)
                         }
@@ -140,36 +112,64 @@ fun PanelDocenteScreen(
                     ) {
                         item {
                             Text(
-                                "Crea tu primer curso para continuar."
+                                "Crea tu primer curso para comenzar."
                             )
                         }
                     }
 
                     item {
+                        Text(
+                            text = "Crear un curso",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
                         OutlinedTextField(
                             value = estado.nombre,
-                            onValueChange = cursosViewModel::actualizarNombre,
+
+                            onValueChange =
+                                cursosViewModel::actualizarNombre,
+
                             label = {
-                                Text("Nombre del nuevo curso")
+                                Text("Nombre del curso")
                             },
+
+                            placeholder = {
+                                Text("Ejemplo: 3.º A")
+                            },
+
                             singleLine = true,
+
                             enabled = !estado.guardando,
+
                             isError = estado.errorNombre != null,
+
                             supportingText = {
                                 estado.errorNombre?.let {
                                     Text(it)
                                 }
-                            }
+                            },
+
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
                     item {
                         Button(
                             onClick = cursosViewModel::crearCurso,
-                            enabled = !estado.cargando &&
-                                !estado.guardando
+
+                            enabled =
+                                !estado.cargando &&
+                                !estado.guardando,
+
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Crear curso")
+                            Text(
+                                if (estado.guardando) {
+                                    "Guardando…"
+                                } else {
+                                    "Crear curso"
+                                }
+                            )
                         }
                     }
 
@@ -180,6 +180,7 @@ fun PanelDocenteScreen(
                     }
                 }
             },
+
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -196,175 +197,297 @@ fun PanelDocenteScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
-            .padding(horizontal = 24.dp),
-        contentPadding = PaddingValues(vertical = 24.dp),
+            .imePadding(),
+
+        contentPadding = PaddingValues(
+            horizontal = 24.dp,
+            vertical = 24.dp
+        ),
+
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // Marca y acceso al perfil.
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+
+                horizontalArrangement =
+                    Arrangement.spacedBy(12.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+
+                    color =
+                        MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Box(
+                    Icon(
+                        painter = painterResource(
+                            android.R.drawable.ic_menu_agenda
+                        ),
+
+                        contentDescription = null,
+
+                        tint =
+                            MaterialTheme.colorScheme.onPrimaryContainer,
+
                         modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                MaterialTheme.colorScheme.primaryContainer
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "📖",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
+                            .padding(12.dp)
+                            .size(24.dp)
+                    )
+                }
 
-                    Column {
-                        Text(
-                            text = "MPAZ PRO 3.º",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "MPAZ PRO 3.º",
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
-                        Text(
-                            text = "3.º Básico",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
+                    Text(
+                        text = "Espacio docente",
+
+                        style = MaterialTheme.typography.bodySmall,
+
+                        color =
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 Surface(
+                    onClick = onAbrirPerfil,
+
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(48.dp)
+
+                    color =
+                        MaterialTheme.colorScheme.primaryContainer,
+
+                    modifier = Modifier.size(52.dp)
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = docente.nombre.take(1).uppercase(),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                    ImagenInteligente(
+                        ruta = fotoRuta,
+
+                        descripcion = "Abrir mi perfil",
+
+                        modifier = Modifier.size(52.dp)
+                    )
+                }
+            }
+        }
+
+        // Saludo.
+        item {
+            Column(
+                verticalArrangement =
+                    Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "¡Hola, ${
+                        docente.nombre
+                            .trim()
+                            .substringBefore(' ')
+                    }!",
+
+                    style = MaterialTheme.typography.headlineLarge
+                )
+
+                Text(
+                    text = "Acompañemos cada nuevo aprendizaje.",
+
+                    color =
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Resumen del espacio docente.
+        item {
+            Surface(
+                color =
+                    MaterialTheme.colorScheme.surfaceVariant,
+
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = if (estado.cargando) {
+                        "Cargando tus cursos…"
+                    } else {
+                        "${estado.cursos.size} cursos a tu cargo · " +
+                            "4 asignaturas"
+                    },
+
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 12.dp
+                    ),
+
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+
+        // Opción unificada: Actividades.
+        item {
+            Card(
+                onClick = {
+                    accion = "actividades"
+                },
+
+                modifier = Modifier.fillMaxWidth(),
+
+                shape = RoundedCornerShape(28.dp),
+
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.primary,
+
+                    contentColor =
+                        MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            android.R.drawable.ic_menu_edit
+                        ),
+
+                        contentDescription = null,
+
+                        modifier = Modifier.size(32.dp)
+                    )
+
+                    Text(
+                        text = "Actividades",
+
+                        style =
+                            MaterialTheme.typography.headlineSmall
+                    )
+
+                    Text(
+                        text = "Consulta las actividades de tus cursos " +
+                            "y crea nuevas propuestas."
+                    )
+
+                    Text(
+                        text = "Elegir curso →",
+
+                        style =
+                            MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Tu aula",
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+        // Estudiantes y cursos.
+        item {
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(16.dp)
+            ) {
+                TarjetaMenuDocente(
+                    titulo = "Agregar estudiantes",
+
+                    detalle = "Incorpora niños a tu curso",
+
+                    icono = android.R.drawable.ic_menu_add,
+
+                    fondo =
+                        MaterialTheme.colorScheme.primaryContainer,
+
+                    texto =
+                        MaterialTheme.colorScheme.onPrimaryContainer,
+
+                    modifier = Modifier.weight(1f),
+
+                    onClick = {
+                        accion = "estudiantes"
                     }
-                }
-            }
-        }
-
-        item {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "¡Hola, docente!",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Text(
-                    text = "¿Qué deseas hacer hoy?",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                TarjetaMenuDocente(
+                    titulo = "Mis cursos",
+
+                    detalle = "Organiza tus grupos",
+
+                    icono = android.R.drawable.ic_menu_agenda,
+
+                    fondo =
+                        MaterialTheme.colorScheme.secondaryContainer,
+
+                    texto =
+                        MaterialTheme.colorScheme.onSecondaryContainer,
+
+                    modifier = Modifier.weight(1f),
+
+                    onClick = {
+                        accion = "cursos"
+                    }
                 )
             }
         }
 
+        // Resultados y perfil.
         item {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    MenuBubbleCard(
-                        title = "Agregar estudiantes",
-                        emoji = "👤+",
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "estudiantes"
-                        }
-                    )
+                TarjetaMenuDocente(
+                    titulo = "Ver resultados",
 
-                    MenuBubbleCard(
-                        title = "Agregar actividad",
-                        emoji = "📄+",
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "crear"
-                        }
-                    )
-                }
+                    detalle = "Avances y estrellas",
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    MenuBubbleCard(
-                        title = "Mis cursos",
-                        emoji = "📖",
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "cursos"
-                        }
-                    )
+                    icono =
+                        android.R.drawable.ic_menu_sort_by_size,
 
-                    MenuBubbleCard(
-                        title = "Mis actividades",
-                        emoji = "☑️",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "actividades"
-                        }
-                    )
-                }
+                    fondo =
+                        MaterialTheme.colorScheme.tertiaryContainer,
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    MenuBubbleCard(
-                        title = "Ver resultados",
-                        emoji = "📊",
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "resultados"
-                        }
-                    )
+                    texto =
+                        MaterialTheme.colorScheme.onTertiaryContainer,
 
-                    MenuBubbleCard(
-                        title = "Mi perfil",
-                        emoji = "⚙️",
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            accion = "perfil"
-                        }
-                    )
-                }
+                    modifier = Modifier.weight(1f),
+
+                    onClick = onAbrirResultados
+                )
+
+                TarjetaMenuDocente(
+                    titulo = "Mi perfil",
+
+                    detalle = "Tus datos y fotografía",
+
+                    icono =
+                        android.R.drawable.ic_menu_myplaces,
+
+                    fondo =
+                        MaterialTheme.colorScheme.surfaceVariant,
+
+                    texto =
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+
+                    modifier = Modifier.weight(1f),
+
+                    onClick = onAbrirPerfil
+                )
             }
         }
 
-        if (estado.cargando || estado.guardando) {
+        if (estado.cargando) {
             item {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
@@ -374,24 +497,21 @@ fun PanelDocenteScreen(
 
         estado.mensaje?.let { mensaje ->
             item {
-                Text(
-                    text = mensaje,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text(mensaje)
             }
         }
 
         item {
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
             OutlinedButton(
                 onClick = onCerrarSesion,
+
                 enabled = !estado.guardando,
+
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp)
+
+                shape = RoundedCornerShape(18.dp),
+
+                contentPadding = PaddingValues(16.dp)
             ) {
                 Text("Cerrar sesión")
             }
@@ -400,43 +520,51 @@ fun PanelDocenteScreen(
 }
 
 @Composable
-private fun MenuBubbleCard(
-    title: String,
-    emoji: String,
-    containerColor: Color,
-    contentColor: Color,
+private fun TarjetaMenuDocente(
+    titulo: String,
+    detalle: String,
+    icono: Int,
+    fondo: Color,
+    texto: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onClick,
+
+        modifier = modifier.heightIn(min = 180.dp),
+
+        shape = RoundedCornerShape(26.dp),
+
         colors = CardDefaults.cardColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        ),
-        shape = RoundedCornerShape(28.dp),
-        modifier = modifier.height(140.dp)
+            containerColor = fondo,
+            contentColor = texto
+        )
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(18.dp),
+
+            verticalArrangement =
+                Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = emoji,
-                style = MaterialTheme.typography.headlineLarge
+            Icon(
+                painter = painterResource(icono),
+
+                contentDescription = null,
+
+                modifier = Modifier.size(30.dp)
             )
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium
             )
 
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center
+                text = detalle,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

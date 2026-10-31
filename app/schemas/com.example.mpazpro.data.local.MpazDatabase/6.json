@@ -1,0 +1,399 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 6,
+    "identityHash": "6383fe41b891a98dc07dea2cce20d692",
+    "entities": [
+      {
+        "tableName": "docentes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `correo` TEXT NOT NULL, `claveHash` TEXT NOT NULL, `claveSalt` TEXT NOT NULL, `claveIteraciones` INTEGER NOT NULL, `fotoRuta` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correo",
+            "columnName": "correo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "claveHash",
+            "columnName": "claveHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "claveSalt",
+            "columnName": "claveSalt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "claveIteraciones",
+            "columnName": "claveIteraciones",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fotoRuta",
+            "columnName": "fotoRuta",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_docentes_correo",
+            "unique": true,
+            "columnNames": [
+              "correo"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_docentes_correo` ON `${TABLE_NAME}` (`correo`)"
+          }
+        ]
+      },
+      {
+        "tableName": "cursos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `docenteId` INTEGER NOT NULL, `nombre` TEXT NOT NULL, FOREIGN KEY(`docenteId`) REFERENCES `docentes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "docenteId",
+            "columnName": "docenteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_cursos_docenteId_nombre",
+            "unique": true,
+            "columnNames": [
+              "docenteId",
+              "nombre"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_cursos_docenteId_nombre` ON `${TABLE_NAME}` (`docenteId`, `nombre`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "docentes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "docenteId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "estudiantes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cursoId` INTEGER NOT NULL, `nombre` TEXT NOT NULL, `fotoRuta` TEXT, FOREIGN KEY(`cursoId`) REFERENCES `cursos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursoId",
+            "columnName": "cursoId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fotoRuta",
+            "columnName": "fotoRuta",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_estudiantes_cursoId",
+            "unique": false,
+            "columnNames": [
+              "cursoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_estudiantes_cursoId` ON `${TABLE_NAME}` (`cursoId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "cursos",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cursoId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "actividades",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cursoId` INTEGER NOT NULL, `asignaturaId` TEXT NOT NULL, `titulo` TEXT NOT NULL, `instrucciones` TEXT NOT NULL, `pregunta` TEXT NOT NULL, `alternativaA` TEXT NOT NULL, `alternativaB` TEXT NOT NULL, `alternativaC` TEXT NOT NULL, `alternativaD` TEXT NOT NULL, `respuestaCorrecta` INTEGER NOT NULL, `creadaEn` INTEGER NOT NULL, FOREIGN KEY(`cursoId`) REFERENCES `cursos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursoId",
+            "columnName": "cursoId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asignaturaId",
+            "columnName": "asignaturaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titulo",
+            "columnName": "titulo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "instrucciones",
+            "columnName": "instrucciones",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pregunta",
+            "columnName": "pregunta",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaA",
+            "columnName": "alternativaA",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaB",
+            "columnName": "alternativaB",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaC",
+            "columnName": "alternativaC",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alternativaD",
+            "columnName": "alternativaD",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "respuestaCorrecta",
+            "columnName": "respuestaCorrecta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadaEn",
+            "columnName": "creadaEn",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_actividades_cursoId_asignaturaId",
+            "unique": false,
+            "columnNames": [
+              "cursoId",
+              "asignaturaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividades_cursoId_asignaturaId` ON `${TABLE_NAME}` (`cursoId`, `asignaturaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "cursos",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cursoId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "intentos_actividad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `estudianteId` INTEGER NOT NULL, `actividadId` INTEGER NOT NULL, `respuestaElegida` INTEGER NOT NULL, `respuestaCorrecta` INTEGER NOT NULL, `correcta` INTEGER NOT NULL, `creadaEn` INTEGER NOT NULL, FOREIGN KEY(`estudianteId`) REFERENCES `estudiantes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`actividadId`) REFERENCES `actividades`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estudianteId",
+            "columnName": "estudianteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividadId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "respuestaElegida",
+            "columnName": "respuestaElegida",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "respuestaCorrecta",
+            "columnName": "respuestaCorrecta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correcta",
+            "columnName": "correcta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadaEn",
+            "columnName": "creadaEn",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_intentos_actividad_estudianteId_actividadId",
+            "unique": true,
+            "columnNames": [
+              "estudianteId",
+              "actividadId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_intentos_actividad_estudianteId_actividadId` ON `${TABLE_NAME}` (`estudianteId`, `actividadId`)"
+          },
+          {
+            "name": "index_intentos_actividad_actividadId",
+            "unique": false,
+            "columnNames": [
+              "actividadId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_intentos_actividad_actividadId` ON `${TABLE_NAME}` (`actividadId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "estudiantes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "estudianteId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "actividades",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividadId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6383fe41b891a98dc07dea2cce20d692')"
+    ]
+  }
+}

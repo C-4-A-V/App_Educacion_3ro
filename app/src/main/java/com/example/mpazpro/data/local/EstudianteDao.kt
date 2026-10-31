@@ -40,4 +40,43 @@ interface EstudianteDao {
         """
     )
     fun observarPerfiles(): Flow<List<PerfilEstudiante>>
+
+    @Query(
+        """
+        SELECT
+            e.id AS estudianteId,
+            e.nombre,
+            e.fotoRuta,
+            e.cursoId,
+            a.asignaturaId,
+            COUNT(a.id) AS total,
+            COUNT(i.id) AS completadas,
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN i.correcta = 1 THEN 1
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS correctas
+        FROM estudiantes e
+        INNER JOIN cursos c ON c.id = e.cursoId
+        LEFT JOIN actividades a ON a.cursoId = e.cursoId
+        LEFT JOIN intentos_actividad i
+            ON i.actividadId = a.id
+            AND i.estudianteId = e.id
+        WHERE c.docenteId = :docenteId
+        GROUP BY
+            e.id,
+            e.nombre,
+            e.fotoRuta,
+            e.cursoId,
+            a.asignaturaId
+        ORDER BY e.nombre COLLATE NOCASE ASC
+        """
+    )
+    fun observarAvancesDocente(
+        docenteId: Long
+    ): Flow<List<com.example.mpazpro.model.AvanceAlumnoFila>>
 }

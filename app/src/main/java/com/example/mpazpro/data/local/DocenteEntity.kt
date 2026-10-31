@@ -25,5 +25,7 @@ data class DocenteEntity(
     val claveSalt: String,
 
     // Parámetro del algoritmo que definiremos al crear el registro.
-    val claveIteraciones: Int
+    val claveIteraciones: Int,
+
+    val fotoRuta: String? = null
 )

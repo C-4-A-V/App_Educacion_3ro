@@ -23,4 +23,15 @@ interface DocenteDao {
         """
     )
     suspend fun buscarPorCorreo(correo: String): DocenteEntity?
+
+    @Query("SELECT * FROM docentes WHERE id = :docenteId LIMIT 1")
+    fun observarPorId(
+        docenteId: Long
+    ): kotlinx.coroutines.flow.Flow<DocenteEntity?>
+
+    @Query("UPDATE docentes SET fotoRuta = :ruta WHERE id = :docenteId")
+    suspend fun actualizarFoto(
+        docenteId: Long,
+        ruta: String
+    ): Int
 }

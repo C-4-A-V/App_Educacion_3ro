@@ -21,12 +21,15 @@ import com.example.mpazpro.ui.screens.EstudiantesScreen
 import com.example.mpazpro.ui.screens.InicioEstudianteScreen
 import com.example.mpazpro.ui.screens.LoginDocenteScreen
 import com.example.mpazpro.ui.screens.PanelDocenteScreen
+import com.example.mpazpro.ui.screens.PerfilDocenteScreen
 import com.example.mpazpro.ui.screens.RegistroDocenteScreen
 import com.example.mpazpro.ui.screens.ResolverActividadScreen
+import com.example.mpazpro.ui.screens.ResumenDocenteScreen
 import com.example.mpazpro.ui.screens.ResultadosActividadScreen
 import com.example.mpazpro.ui.screens.SeleccionEstudianteScreen
 import com.example.mpazpro.ui.viewmodel.AccesoEstudianteViewModel
 import com.example.mpazpro.ui.viewmodel.LoginDocenteViewModel
+import com.example.mpazpro.ui.viewmodel.PerfilDocenteViewModel
 
 @Composable
 fun AppNavigation(
@@ -44,11 +47,157 @@ fun AppNavigation(
     val estadoEstudiante by accesoEstudianteViewModel.uiState
         .collectAsStateWithLifecycle()
 
+    val perfilDocenteViewModel: PerfilDocenteViewModel = viewModel()
+
+    val estadoPerfil by perfilDocenteViewModel.uiState
+        .collectAsStateWithLifecycle()
+
+    LaunchedEffect(estadoLogin.docente?.id) {
+        estadoLogin.docente?.let {
+            perfilDocenteViewModel.cargar(it.id)
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Bienvenida.route,
         modifier = modifier
     ) {
+        composable(Screen.PerfilDocente.route) {
+            val docente = estadoLogin.docente
+
+            if (docente == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Bienvenida.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                PerfilDocenteScreen(
+                    docenteId = docente.id,
+                    perfilViewModel = perfilDocenteViewModel,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(Screen.CursosResultados.route) {
+            val docente = estadoLogin.docente
+
+            if (docente == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Bienvenida.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                ResumenDocenteScreen(
+                    docenteId = docente.id,
+                    onVolver = {
+                        navController.popBackStack()
+                    },
+                    onAbrirCurso = { cursoId ->
+                        navController.navigate(
+                            Screen.ResumenCurso.crearRuta(cursoId)
+                        ) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.ResumenCurso.route,
+            arguments = listOf(
+                navArgument("cursoId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { entrada ->
+            val docente = estadoLogin.docente
+
+            val cursoId = entrada.arguments
+                ?.getLong("cursoId") ?: -1L
+
+            if (docente == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Bienvenida.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                ResumenDocenteScreen(
+                    docenteId = docente.id,
+                    cursoId = cursoId,
+                    onVolver = {
+                        navController.popBackStack()
+                    },
+                    onAbrirEstudiante = { estudianteId ->
+                        navController.navigate(
+                            Screen.ResumenEstudiante.crearRuta(
+                                cursoId = cursoId,
+                                estudianteId = estudianteId
+                            )
+                        ) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.ResumenEstudiante.route,
+            arguments = listOf(
+                navArgument("cursoId") {
+                    type = NavType.LongType
+                },
+                navArgument("estudianteId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { entrada ->
+            val docente = estadoLogin.docente
+
+            val cursoId = entrada.arguments
+                ?.getLong("cursoId") ?: -1L
+
+            val estudianteId = entrada.arguments
+                ?.getLong("estudianteId") ?: -1L
+
+            if (docente == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Bienvenida.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                ResumenDocenteScreen(
+                    docenteId = docente.id,
+                    cursoId = cursoId,
+                    estudianteId = estudianteId,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
         composable(Screen.Bienvenida.route) {
             BienvenidaScreen(
                 onIngresarDocente = {
@@ -110,6 +259,19 @@ fun AppNavigation(
             if (docente != null) {
                 PanelDocenteScreen(
                     docente = docente,
+                    fotoRuta = estadoPerfil.docente
+                        ?.takeIf { it.id == docente.id }
+                        ?.fotoRuta,
+                    onAbrirPerfil = {
+                        navController.navigate(Screen.PerfilDocente.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onAbrirResultados = {
+                        navController.navigate(Screen.CursosResultados.route) {
+                            launchSingleTop = true
+                        }
+                    },
                     onCerrarSesion = {
                         loginViewModel.cerrarSesion()
 
@@ -420,6 +582,7 @@ fun AppNavigation(
         }
 
         composable(Screen.InicioEstudiante.route) {
+            val docente = estadoLogin.docente // safety
             val estudiante = estadoEstudiante.seleccionado
 
             if (estudiante != null) {
