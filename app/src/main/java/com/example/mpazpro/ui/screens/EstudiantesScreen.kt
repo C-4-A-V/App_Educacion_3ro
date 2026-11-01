@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +31,7 @@ fun EstudiantesScreen(
     modifier: Modifier = Modifier,
     estudiantesViewModel: EstudiantesViewModel = viewModel()
 ) {
+    DocenteTheme {
     val estado by estudiantesViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(cursoId, docenteId) {
@@ -41,16 +47,15 @@ fun EstudiantesScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            TextButton(onClick = onVolver) {
+            BotonVolver(onClick = onVolver) {
                 Text("Volver a mis cursos")
             }
         }
 
         item {
-            Text(
-                text = estado.curso?.nombre ?: "Curso",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+            EncabezadoDocente(
+                titulo = estado.curso?.nombre ?: "Curso",
+                detalle = "Organiza tu grupo y acompaña a cada estudiante."
             )
         }
 
@@ -84,10 +89,7 @@ fun EstudiantesScreen(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                text = "📚",
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                            Icon(painterResource(android.R.drawable.ic_menu_agenda), contentDescription = null)
                             Text(
                                 text = "Actividades",
                                 style = MaterialTheme.typography.titleMedium,
@@ -111,10 +113,7 @@ fun EstudiantesScreen(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                text = "👥",
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                            Icon(painterResource(android.R.drawable.ic_menu_myplaces), contentDescription = null)
                             Text(
                                 text = "Estudiantes",
                                 style = MaterialTheme.typography.titleMedium,
@@ -239,12 +238,13 @@ fun EstudiantesScreen(
                             Text(
                                 text = "ID: E-${estudiante.id}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
             }
         }
+    }
     }
 }

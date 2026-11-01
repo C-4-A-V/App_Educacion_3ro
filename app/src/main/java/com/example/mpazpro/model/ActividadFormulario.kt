@@ -7,12 +7,14 @@ data class ActividadFormulario(
     val alternativas: List<String> = listOf("", "", "", ""),
     val respuestaCorrecta: Int = -1,
     val maxIntentos: Int = 3,
-    val explicacion: String = ""
+    val explicacion: String = "",
+    val pista: String = ""
 ) {
     fun normalizado(): ActividadFormulario {
         return copy(
             titulo = titulo.trim(),
             explicacion = explicacion.trim(),
+            pista = pista.trim(),
             instrucciones = instrucciones.trim(),
             pregunta = pregunta.trim(),
             alternativas = alternativas.map {

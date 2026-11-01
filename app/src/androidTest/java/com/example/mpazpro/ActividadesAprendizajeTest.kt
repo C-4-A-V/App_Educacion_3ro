@@ -42,6 +42,25 @@ class ActividadesAprendizajeTest {
         sql("INSERT INTO actividades (id,cursoId,asignaturaId,titulo,instrucciones,pregunta,alternativaA,alternativaB,alternativaC,alternativaD,respuestaCorrecta,creadaEn) VALUES (1,1,'matematica','Sumemos','Lee con calma','¿Cuánto es 2 + 2?','4','3','5','6',0,1)")
     }
 
+    @Test fun continuacionRespetaAsignaturaOrdenYPendientesGuardadas() = runBlocking {
+        val sql = db.openHelper.writableDatabase
+        // La pregunta inicial queda en medio del listado.
+        sql.execSQL("UPDATE actividades SET creadaEn=20 WHERE id=1")
+        for ((id, fecha, asignatura) in listOf(Triple(2, 30, "matematica"), Triple(3, 10, "matematica"), Triple(4, 5, "lenguaje"))) {
+            sql.execSQL("INSERT INTO actividades (id,cursoId,asignaturaId,titulo,instrucciones,pregunta,alternativaA,alternativaB,alternativaC,alternativaD,respuestaCorrecta,creadaEn) VALUES ($id,1,'$asignatura','Pregunta','Lee','Pregunta','A','B','C','D',0,$fecha)")
+        }
+        assertNull(repository.obtenerSiguienteActividad(1, 1))
+        repository.enviarRespuesta(1, 1, 0, 0)
+        assertEquals(3L, repository.obtenerSiguienteActividad(1, 1))
+        repository.enviarRespuesta(1, 3, 0, 0)
+        // Retoma la pendiente anterior sin repetir preguntas completadas.
+        val reabierta = ActividadEstudianteRepository(db)
+        assertEquals(2L, reabierta.obtenerSiguienteActividad(1, 3))
+        reabierta.enviarRespuesta(1, 2, 0, 0)
+        assertNull(reabierta.obtenerSiguienteActividad(1, 2))
+        assertNull(reabierta.obtenerSiguienteActividad(999, 2))
+    }
+
     private fun practica() {
         db.openHelper.writableDatabase.execSQL("UPDATE actividades SET maxIntentos=3, explicacion='Dos más dos son cuatro.' WHERE id=1")
     }
@@ -144,7 +163,7 @@ class ActividadesAprendizajeTest {
             sqlite.version = 6
         }
         val migrada = Room.databaseBuilder(context, MpazDatabase::class.java, nombre)
-            .addMigrations(MpazDatabase.MIGRATION_6_7).build()
+            .addMigrations(MpazDatabase.MIGRATION_6_7, MpazDatabase.MIGRATION_7_8).build()
         try {
             assertEquals("Sofía", migrada.estudianteDao().observarPerfiles().first().single().nombre)
             val actividad = migrada.actividadDao().buscarPorId(1)!!

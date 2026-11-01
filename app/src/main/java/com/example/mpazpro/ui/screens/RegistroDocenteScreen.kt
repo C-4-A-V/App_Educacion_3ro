@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,6 +35,7 @@ fun RegistroDocenteScreen(
     modifier: Modifier = Modifier,
     registroViewModel: RegistroDocenteViewModel = viewModel()
 ) {
+    DocenteTheme {
     val estado by registroViewModel.uiState.collectAsStateWithLifecycle()
     val editable = !estado.guardando && !estado.registrado
 
@@ -51,10 +57,16 @@ fun RegistroDocenteScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Crear cuenta docente",
-            style = MaterialTheme.typography.headlineMedium
+        EncabezadoDocente(
+            titulo = "Comienza a acompañar",
+            detalle = "Crea tu cuenta y prepara nuevas oportunidades para aprender."
         )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Crear cuenta docente", style = MaterialTheme.typography.titleLarge)
 
         Text("Utiliza datos ficticios para este proyecto académico.")
 
@@ -162,18 +174,21 @@ fun RegistroDocenteScreen(
             Button(
                 onClick = registroViewModel::registrar,
                 enabled = !estado.guardando,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {
                 Text("Crear cuenta")
             }
         }
 
-        TextButton(
+        BotonVolver(
             onClick = onVolver,
             enabled = !estado.guardando && !estado.registrado,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Cancelar y volver")
         }
+        }
+        }
+    }
     }
 }

@@ -21,7 +21,8 @@ data class ActividadParaResolver(
     val alternativaB: String,
     val alternativaC: String,
     val alternativaD: String,
-    val maxIntentos: Int = 1
+    val maxIntentos: Int = 1,
+    val pista: String = ""
 )
 
 data class ActividadesEstudianteUiState(
@@ -31,6 +32,8 @@ data class ActividadesEstudianteUiState(
     val mensaje: String? = null
 )
 
+data class ActividadParaContinuar(val id: Long, val asignaturaId: String, val titulo: String)
+
 data class ResolverActividadUiState(
     val actividad: ActividadParaResolver? = null,
     val respuestaSeleccionada: Int = -1,
@@ -38,6 +41,11 @@ data class ResolverActividadUiState(
     val cargando: Boolean = true,
     val enviando: Boolean = false,
     val reintentando: Boolean = false,
+    val progresoAsignatura: ProgresoEstudiante? = null,
+    val errorProgreso: Boolean = false,
+    val siguienteActividadId: Long? = null,
+    val cargandoContinuacion: Boolean = true,
+    val errorContinuacion: Boolean = false,
     val explicacion: String = "",
     val mensaje: String? = null
 )

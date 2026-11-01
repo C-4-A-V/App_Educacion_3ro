@@ -23,7 +23,12 @@ El registro de autores de Git no sustituye la confirmación de los integrantes n
 - Cámara mediante TakePicture, galería mediante GetContent y FileProvider de alcance limitado.
 - Creación de actividades con cuatro alternativas, validaciones por campo y explicación de la respuesta.
 - Prácticas de hasta tres intentos y evaluaciones de un intento.
+- Pistas opcionales de hasta 500 caracteres: creación y edición docente, visibles solo en prácticas.
+- Pudú junto al avance, ayudas desplegables, celebración de asignatura y acceso directo a una pregunta pendiente.
+- Indicador docente de estudiantes que necesitaron más intentos o finalizaron sin acertar.
 - Bienvenida personalizada después de seleccionar el perfil del estudiante.
+- Perfil estudiantil desde el saludo: foto con cámara/galería, objetivo escrito por el estudiante y guardado por perfil (hasta 160 caracteres), progreso y estrellas.
+- Modo oscuro y texto grande guardados por perfil estudiantil en DataStore, independientes del área docente; nombre y curso se gestionan desde el docente.
 - Una estrella por actividad acertada; el progreso cuenta actividades terminadas, sin duplicar reintentos.
 - Informes por estudiante, curso y asignatura y exportación JSON.
 - Cuadrículas de una, dos y tres columnas para ventanas compactas, medianas y expandidas.
@@ -50,7 +55,7 @@ Para cámara y galería, probar también en un teléfono físico. La captura pid
 | Correo | milo@gmail.com |
 | Clave inicial de instalación nueva | Alegria2002 |
 | Curso inicial si no existe ninguno | 3.º Básico A |
-| Actividades | 10 por asignatura; 40 preguntas originales con explicación |
+| Actividades | 10 por asignatura; 40 preguntas originales con explicación y pista específica |
 | Modalidad de las actividades predeterminadas | Práctica, hasta tres intentos |
 
 La carga no modifica la contraseña de una cuenta Milo existente. Si ya tiene cursos, se utiliza el primero por ID. Las preguntas se agregan solo cuando no existe una actividad con el mismo curso, asignatura y título; no se borran actividades, estudiantes ni resultados.
@@ -85,7 +90,7 @@ El banco es contenido original orientado al nivel escolar. El docente puede revi
 | data/media | Importación privada y archivos temporales de imágenes |
 | navigation | Rutas reutilizables y NavHost |
 
-Room usa actualmente el esquema 7 con migraciones explícitas; no se borra la base de datos como mecanismo de actualización. DataStore guarda la preferencia pequeña de lectura, separada de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
+Room usa actualmente el esquema 8 con migraciones explícitas; no se borra la base de datos como mecanismo de actualización. La migración 7→8 agrega pistas sin borrar preguntas ni intentos: usa ayudas específicas para el banco conocido y estrategias generales por asignatura para preguntas personalizadas existentes, revisables por el docente. DataStore guarda la preferencia de lectura y la apariencia del docente por cuenta local, separadas de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
 
 ## Pruebas
 

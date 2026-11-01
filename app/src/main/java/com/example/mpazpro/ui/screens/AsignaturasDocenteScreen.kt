@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -22,6 +27,7 @@ fun AsignaturasDocenteScreen(
     modifier: Modifier = Modifier,
     cursoViewModel: CursoDocenteViewModel = viewModel()
 ) {
+    DocenteTheme {
     val estado by cursoViewModel.uiState
         .collectAsStateWithLifecycle()
 
@@ -40,16 +46,15 @@ fun AsignaturasDocenteScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            TextButton(onClick = onVolver) {
+            BotonVolver(onClick = onVolver) {
                 Text("Volver")
             }
         }
 
         item {
-            Text(
-                text = "Gestionar actividades",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+            EncabezadoDocente(
+                titulo = "Gestionar actividades",
+                detalle = "Cada asignatura, una nueva oportunidad para enseñar."
             )
         }
 
@@ -117,5 +122,6 @@ fun AsignaturasDocenteScreen(
                 }
             }
         }
+    }
     }
 }

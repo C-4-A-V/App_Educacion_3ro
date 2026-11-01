@@ -35,11 +35,12 @@ class ResultadosActividadViewModel(
 
     fun cargar(
         actividadId: Long,
-        docenteId: Long
+        docenteId: Long,
+        forzar: Boolean = false
     ) {
         val nuevoContexto = actividadId to docenteId
 
-        if (contextoActual == nuevoContexto) return
+        if (contextoActual == nuevoContexto && !forzar && observacionJob?.isActive == true) return
 
         observacionJob?.cancel()
         contextoActual = nuevoContexto
@@ -63,7 +64,7 @@ class ResultadosActividadViewModel(
                 }
 
                 _uiState.update {
-                    it.copy(actividad = actividad)
+                    it.copy(actividad = actividad, pistaBorrador = actividad.pista)
                 }
 
                 intentoDao.observarResultadosActividad(
@@ -86,6 +87,46 @@ class ResultadosActividadViewModel(
                         cargando = false,
                         mensaje = "No se pudieron cargar los resultados."
                     )
+                }
+            }
+        }
+    }
+
+    fun recargar() {
+        if (_uiState.value.guardandoPista) return
+        contextoActual?.let { cargar(it.first, it.second, forzar = true) }
+    }
+
+    fun actualizarPista(valor: String) {
+        if (_uiState.value.guardandoPista) return
+        _uiState.update { it.copy(pistaBorrador = valor, mensajePista = null) }
+    }
+
+    fun guardarPista() {
+        val (actividadId, docenteId) = contextoActual ?: return
+        val actual = _uiState.value
+        if (actual.guardandoPista || actual.actividad == null) return
+        val pista = actual.pistaBorrador.trim()
+        if (pista.length > 500) {
+            _uiState.update { it.copy(mensajePista = "Usa hasta 500 caracteres.") }
+            return
+        }
+        _uiState.update { it.copy(guardandoPista = true, mensajePista = null) }
+        viewModelScope.launch {
+            try {
+                check(actividadDao.actualizarPista(actividadId, docenteId, pista) == 1)
+                if (contextoActual == actividadId to docenteId) {
+                    _uiState.update { it.copy(
+                        actividad = it.actividad?.copy(pista = pista),
+                        pistaBorrador = pista, guardandoPista = false,
+                        mensajePista = "Pista guardada."
+                    ) }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (contextoActual == actividadId to docenteId) {
+                    _uiState.update { it.copy(guardandoPista = false, mensajePista = "No se pudo guardar la pista.") }
                 }
             }
         }

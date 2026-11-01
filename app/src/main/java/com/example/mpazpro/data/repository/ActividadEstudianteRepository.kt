@@ -48,6 +48,14 @@ class ActividadEstudianteRepository(
         }
     }
 
+    suspend fun obtenerSiguienteActividad(estudianteId: Long, actividadId: Long): Long? =
+        database.withTransaction {
+            if (intentos.buscar(estudianteId, actividadId)?.finalizada != true) {
+                return@withTransaction null
+            }
+            actividades.buscarSiguientePendiente(estudianteId, actividadId)
+        }
+
     suspend fun obtenerExplicacion(estudianteId: Long, actividadId: Long): String {
         return database.withTransaction {
             val intento = intentos.buscar(estudianteId, actividadId)

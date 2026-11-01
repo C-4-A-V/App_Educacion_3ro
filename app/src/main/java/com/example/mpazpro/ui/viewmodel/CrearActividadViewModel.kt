@@ -53,6 +53,7 @@ class CrearActividadViewModel(
             instrucciones = savedState[prefijo + "instrucciones"] ?: "",
             pregunta = savedState[prefijo + "pregunta"] ?: "",
             explicacion = savedState[prefijo + "explicacion"] ?: "",
+            pista = savedState[prefijo + "pista"] ?: "",
             alternativas = savedState.get<ArrayList<String>>(prefijo + "alternativas")?.toList() ?: List(4) { "" },
             respuestaCorrecta = savedState[prefijo + "respuesta"] ?: -1,
             maxIntentos = savedState[prefijo + "intentos"] ?: 3
@@ -114,9 +115,14 @@ class CrearActividadViewModel(
         savedState[prefijo + "instrucciones"] = f.instrucciones
         savedState[prefijo + "pregunta"] = f.pregunta
         savedState[prefijo + "explicacion"] = f.explicacion
+        savedState[prefijo + "pista"] = f.pista
         savedState[prefijo + "alternativas"] = ArrayList(f.alternativas)
         savedState[prefijo + "respuesta"] = f.respuestaCorrecta
         savedState[prefijo + "intentos"] = f.maxIntentos
+    }
+
+    fun actualizarPista(valor: String) {
+        editar { it.copy(pista = valor) }
     }
 
     fun actualizarExplicacion(valor: String) {

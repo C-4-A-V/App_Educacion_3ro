@@ -14,6 +14,48 @@ interface ActividadDao {
     @Query("SELECT id FROM actividades WHERE cursoId = :cursoId AND asignaturaId = :asignaturaId AND titulo = :titulo LIMIT 1")
     suspend fun buscarPredeterminada(cursoId: Long, asignaturaId: String, titulo: String): Long?
 
+    // Continúa en el orden del listado y luego retoma las pendientes anteriores.
+    @Query("""
+        SELECT a.id FROM estudiantes e
+        INNER JOIN actividades actual ON actual.id = :actividadId AND actual.cursoId = e.cursoId
+        INNER JOIN actividades a ON a.cursoId = actual.cursoId AND a.asignaturaId = actual.asignaturaId
+        WHERE e.id = :estudianteId AND a.id != actual.id
+        AND NOT EXISTS (
+            SELECT 1 FROM intentos_actividad i
+            WHERE i.estudianteId = e.id AND i.actividadId = a.id AND i.finalizada = 1
+        )
+        ORDER BY CASE WHEN a.creadaEn < actual.creadaEn
+            OR (a.creadaEn = actual.creadaEn AND a.id < actual.id) THEN 0 ELSE 1 END,
+            a.creadaEn DESC, a.id DESC
+        LIMIT 1
+    """)
+    suspend fun buscarSiguientePendiente(estudianteId: Long, actividadId: Long): Long?
+
+    @Query("""
+        UPDATE actividades SET pista = :pista WHERE id = :actividadId
+        AND cursoId IN (SELECT id FROM cursos WHERE docenteId = :docenteId)
+    """)
+    suspend fun actualizarPista(actividadId: Long, docenteId: Long, pista: String): Int
+
+    @Query("""
+        SELECT a.id, a.asignaturaId, a.titulo
+        FROM actividades a INNER JOIN estudiantes e ON e.cursoId = a.cursoId
+        WHERE e.id = :estudianteId
+        AND NOT EXISTS (SELECT 1 FROM intentos_actividad fin
+            WHERE fin.estudianteId = e.id AND fin.actividadId = a.id AND fin.finalizada = 1)
+        ORDER BY
+            CASE WHEN EXISTS (SELECT 1 FROM intentos_actividad parcial
+                WHERE parcial.estudianteId = e.id AND parcial.actividadId = a.id) THEN 0 ELSE 1 END,
+            CASE WHEN a.asignaturaId = (
+                SELECT ultima.asignaturaId FROM intentos_actividad i
+                INNER JOIN actividades ultima ON ultima.id = i.actividadId AND ultima.cursoId = e.cursoId
+                WHERE i.estudianteId = e.id ORDER BY i.creadaEn DESC, i.id DESC LIMIT 1
+            ) THEN 0 ELSE 1 END,
+            a.creadaEn DESC, a.id DESC
+        LIMIT 1
+    """)
+    fun observarParaContinuar(estudianteId: Long): Flow<com.example.mpazpro.model.ActividadParaContinuar?>
+
     @Insert
     suspend fun insertar(
         actividad: ActividadEntity
@@ -97,7 +139,8 @@ interface ActividadDao {
             a.alternativaB,
             a.alternativaC,
             a.alternativaD,
-            a.maxIntentos
+            a.maxIntentos,
+            CASE WHEN a.maxIntentos = 3 THEN a.pista ELSE '' END AS pista
         FROM actividades a
         INNER JOIN estudiantes e ON e.cursoId = a.cursoId
         WHERE a.id = :actividadId

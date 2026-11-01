@@ -8,7 +8,17 @@ Las pantallas comprobadas por UI reciben estado y callbacks, para probarlas sin 
 
 ## Resultado verificado de esta implementación
 
-Compilación y lintDebug completados correctamente. Suite completa: **10 pruebas unitarias y 21 pruebas instrumentadas aprobadas** en el teléfono conectado. Esto incluye las tres distribuciones adaptativas, errores del formulario, la migración y la conservación de la cuenta de demostración.
+Para el perfil estudiantil se verificaron **12 pruebas unitarias y 34 pruebas instrumentadas únicas** en el teléfono, con compilación y lintDebug correctos. PreferenciasEstudianteTest comprueba objetivo, modo oscuro y texto grande por perfil tras reabrir DataStore; PerfilEstudianteUiTest comprueba el acceso junto al saludo, ajustes, selección del objetivo y continuación. En la ejecución completa, dos comprobaciones de interfaz necesitaron corregir su desplazamiento dentro de listas diferidas; sus suites se repitieron y pasaron. La cámara y galería reutilizan SelectorFotoEstudiante y FotoStorage; su interacción con aplicaciones externas sigue requiriendo comprobación manual.
+
+### Revisión general anterior
+
+En la revisión general de diseño y funcionamiento se aprobaron **12 pruebas unitarias y la suite completa de 31 pruebas instrumentadas en el teléfono conectado**. assembleDebug y lintDebug finalizaron correctamente. Se ajustó la paleta docente y la distribución de sus tarjetas, la recuperación de errores, la protección frente a toques repetidos en Siguiente y la conservación de la selección al reintentar el progreso. Las pruebas existentes cubren navegación, formularios, ventanas adaptativas, Room y migraciones, pistas, preferencias e importación de imágenes; no sustituyen la revisión manual de todos los dispositivos ni la captura con una aplicación de cámara real.
+
+### Ejecución anterior de pistas
+
+Compilación y lintDebug completados correctamente. En la actualización de pistas y acompañamiento se aprobaron **12 pruebas unitarias**, **13 pruebas instrumentadas de datos en el teléfono y en el emulador**, y **9 pruebas de interfaz en el teléfono** (AyudaEstudianteUiTest y AventuraUiTest). Se verificaron la migración 7→8, conservación de perfiles e intentos, pistas por modalidad y edición autorizada, recuperación de pendientes, apertura/cierre de pista sin perder selección y celebración al completar la asignatura.
+
+En la primera ejecución de interfaz, cuatro pruebas de AventuraUiTest no encontraron la jerarquía Compose del teléfono; al repetir esa suite con la interfaz disponible, sus seis pruebas pasaron. La suite completa histórica de adaptabilidad, cámara y demás pantallas no se volvió a ejecutar en esta actualización.
 
 ## Comandos
 
@@ -33,7 +43,9 @@ Mantener el teléfono desbloqueado y conectado. No ejecutar pruebas sobre una en
 | ActividadAprendizajeValidatorTest | Modalidades y obligatoriedad/límites de explicación |
 | ActividadCamposTest | Errores simultáneos por campo, duplicados y banco de 40 preguntas válido |
 | WindowSizeTest | Puntos de corte 600/840 dp y columnas por clase |
-| ActividadesAprendizajeTest | Room, migración 6 a 7, intentos, cierre, historial, informes y envío simultáneo |
+| ActividadesAprendizajeTest | Room, migración 6 a 8, continuación, intentos, cierre, historial, informes y envío simultáneo |
+| PistasAprendizajeTest | Migración 7 a 8 conservando respuestas, pista por modalidad, autorización de edición y recuperación de pregunta pendiente |
+| AyudaEstudianteUiTest | Abrir/cerrar pista sin alterar la selección, ausencia de pistas en evaluación y celebración al llegar al 100 % |
 | DatosDemostracionTest | Cuenta inicial, diez preguntas por asignatura, concurrencia e idempotencia, conservación de clave y resultados |
 | AventuraUiTest | Saludo, texto ampliado, envío bloqueado, reintento y explicación final |
 | FormularioActividadUiTest | Errores visibles junto al control y corrección del título |

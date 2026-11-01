@@ -1,6 +1,15 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,8 +26,10 @@ fun PerfilDocenteScreen(
     perfilViewModel: PerfilDocenteViewModel,
     onVolver: () -> Unit
 ) {
+    DocenteTheme {
     val estado by perfilViewModel.uiState.collectAsStateWithLifecycle()
     val lectura by perfilViewModel.lectura.collectAsStateWithLifecycle()
+    val modoOscuro = estado.modoOscuro ?: isSystemInDarkTheme()
 
     LaunchedEffect(docenteId) {
         perfilViewModel.cargar(docenteId)
@@ -32,15 +43,15 @@ fun PerfilDocenteScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            TextButton(onClick = onVolver) {
+            BotonVolver(onClick = onVolver) {
                 Text("Volver al menú")
             }
         }
 
         item {
-            Text(
-                text = "Mi perfil",
-                style = MaterialTheme.typography.headlineMedium
+            EncabezadoDocente(
+                titulo = "Mi perfil",
+                detalle = "Tu información y preferencias para trabajar con comodidad."
             )
         }
 
@@ -49,6 +60,35 @@ fun PerfilDocenteScreen(
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Modo oscuro", style = MaterialTheme.typography.titleMedium)
+                        Text("Una apariencia más suave para trabajar con poca luz.")
+                        Text(
+                            "Se guarda para tu cuenta docente.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = modoOscuro,
+                        onCheckedChange = perfilViewModel::cambiarModoOscuro,
+                        enabled = !estado.cargando && !estado.guardando && estado.docente?.id == docenteId,
+                        modifier = Modifier.semantics { contentDescription = "Modo oscuro" }
+                    )
+                }
             }
         }
 
@@ -103,7 +143,7 @@ fun PerfilDocenteScreen(
 
         if (estado.guardando) {
             item {
-                Text("Guardando fotografía…")
+                Text("Guardando cambios…")
             }
         }
 
@@ -112,5 +152,6 @@ fun PerfilDocenteScreen(
                 com.example.mpazpro.ui.components.FeedbackAnimado { Text(mensaje) }
             }
         }
+    }
     }
 }

@@ -11,16 +11,21 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+import com.example.mpazpro.ui.components.anchoFormulario
 import com.example.mpazpro.model.DocenteSesion
 import com.example.mpazpro.ui.components.ImagenInteligente
 import com.example.mpazpro.ui.viewmodel.CursosViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PanelDocenteContenido(
     docente: DocenteSesion,
@@ -34,6 +39,9 @@ internal fun PanelDocenteContenido(
     cursosViewModel: CursosViewModel = viewModel()
 ) {
     val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
+    val densidad = LocalDensity.current
+    val anchoVentana = with(densidad) { LocalWindowInfo.current.containerSize.width.toDp() }
+    val columnasMenu = if (anchoVentana < 460.dp || densidad.fontScale > 1.25f) 1 else 2
 
     var accion by rememberSaveable(docente.id) {
         mutableStateOf<String?>(null)
@@ -199,7 +207,7 @@ internal fun PanelDocenteContenido(
 
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize().anchoFormulario()
             .imePadding(),
 
         contentPadding = PaddingValues(
@@ -283,27 +291,10 @@ internal fun PanelDocenteContenido(
 
         // Saludo.
         item {
-            Column(
-                verticalArrangement =
-                    Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "¡Hola, ${
-                        docente.nombre
-                            .trim()
-                            .substringBefore(' ')
-                    }!",
-
-                    style = MaterialTheme.typography.headlineLarge
-                )
-
-                Text(
-                    text = "Acompañemos cada nuevo aprendizaje.",
-
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            EncabezadoDocente(
+                titulo = "Hola, ${docente.nombre.trim().substringBefore(' ')}",
+                detalle = "Tu dedicación abre nuevas oportunidades. Acompañemos cada aprendizaje."
+            )
         }
 
         // Resumen del espacio docente.
@@ -341,7 +332,7 @@ internal fun PanelDocenteContenido(
 
                 modifier = Modifier.fillMaxWidth(),
 
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(22.dp),
 
                 colors = CardDefaults.cardColors(
                     containerColor =
@@ -398,9 +389,10 @@ internal fun PanelDocenteContenido(
 
         // Estudiantes y cursos.
         item {
-            Row(
-                horizontalArrangement =
-                    Arrangement.spacedBy(16.dp)
+            FlowRow(
+                maxItemsInEachRow = columnasMenu,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 TarjetaMenuDocente(
                     titulo = "Agregar estudiantes",
@@ -446,9 +438,10 @@ internal fun PanelDocenteContenido(
 
         // Resultados y perfil.
         item {
-            Row(
-                horizontalArrangement =
-                    Arrangement.spacedBy(16.dp)
+            FlowRow(
+                maxItemsInEachRow = columnasMenu,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 TarjetaMenuDocente(
                     titulo = "Ver resultados",
@@ -535,9 +528,9 @@ private fun TarjetaMenuDocente(
     Card(
         onClick = onClick,
 
-        modifier = modifier.heightIn(min = 180.dp),
+        modifier = modifier.heightIn(min = 156.dp),
 
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(20.dp),
 
         colors = CardDefaults.cardColors(
             containerColor = fondo,

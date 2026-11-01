@@ -44,5 +44,8 @@ data class ActividadEntity(
     @ColumnInfo(defaultValue = "''")
     val explicacion: String = "",
 
+    @ColumnInfo(defaultValue = "\'\'")
+    val pista: String = "",
+
     val creadaEn: Long = System.currentTimeMillis()
 )

@@ -29,6 +29,8 @@ class ResolverActividadViewModel(
 
     private var contexto: Pair<Long, Long>? = null
     private var cargaJob: Job? = null
+    private var continuacionJob: Job? = null
+    private var progresoJob: Job? = null
 
     fun cargar(
         estudianteId: Long,
@@ -40,6 +42,8 @@ class ResolverActividadViewModel(
         if (contexto == nuevoContexto && !forzar) return
 
         cargaJob?.cancel()
+        continuacionJob?.cancel()
+        progresoJob?.cancel()
         contexto = nuevoContexto
         _uiState.value = ResolverActividadUiState()
 
@@ -67,6 +71,8 @@ class ResolverActividadViewModel(
                     explicacion = repository.obtenerExplicacion(estudianteId, actividadId),
                     cargando = false
                 )
+                observarProgreso(estudianteId, actividad.asignaturaId)
+                actualizarContinuacion()
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (_: Exception) {
@@ -76,6 +82,50 @@ class ResolverActividadViewModel(
                 )
             }
         }
+    }
+
+    private fun observarProgreso(estudianteId: Long, asignaturaId: String) {
+        progresoJob = viewModelScope.launch {
+            try {
+                repository.observarProgresoAsignatura(estudianteId, asignaturaId).collect { progreso ->
+                    _uiState.update { it.copy(progresoAsignatura = progreso, errorProgreso = false) }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                _uiState.update { it.copy(errorProgreso = true) }
+            }
+        }
+    }
+
+    fun actualizarContinuacion() {
+        val contextoActual = contexto ?: return
+        if (_uiState.value.intento?.finalizada != true) return
+        continuacionJob?.cancel()
+        _uiState.update { it.copy(cargandoContinuacion = true, errorContinuacion = false) }
+        continuacionJob = viewModelScope.launch {
+            try {
+                val siguiente = repository.obtenerSiguienteActividad(contextoActual.first, contextoActual.second)
+                if (contexto == contextoActual) {
+                    _uiState.update { it.copy(siguienteActividadId = siguiente, cargandoContinuacion = false) }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (contexto == contextoActual) {
+                    _uiState.update { it.copy(cargandoContinuacion = false, errorContinuacion = true) }
+                }
+            }
+        }
+    }
+
+    fun reintentarProgreso() {
+        val (estudianteId, _) = contexto ?: return
+        val actividad = _uiState.value.actividad ?: return
+        if (_uiState.value.enviando) return
+        progresoJob?.cancel()
+        _uiState.update { it.copy(errorProgreso = false) }
+        observarProgreso(estudianteId, actividad.asignaturaId)
     }
 
     fun recargar() {
@@ -145,16 +195,26 @@ class ResolverActividadViewModel(
                     intentosPrevios = actual.intento?.numero ?: 0
                 )
 
-                val explicacion = repository.obtenerExplicacion(estudianteId, actividad.id)
+                // La respuesta ya está persistida: un fallo al leer la explicación no debe
+                // presentarse como fallo de guardado ni habilitar otro envío.
+                val explicacion = try {
+                    repository.obtenerExplicacion(estudianteId, actividad.id)
+                } catch (cancelacion: CancellationException) {
+                    throw cancelacion
+                } catch (_: Exception) {
+                    null
+                }
                 _uiState.update {
                     it.copy(
                         intento = intento,
-                        explicacion = explicacion,
+                        explicacion = explicacion.orEmpty(),
+                        mensaje = if (explicacion == null) "Tu respuesta está guardada. No pudimos cargar la explicación." else null,
                         reintentando = false,
                         respuestaSeleccionada = intento.respuestaElegida,
                         enviando = false
                     )
                 }
+                actualizarContinuacion()
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (_: Exception) {

@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ActividadEntity::class,
         IntentoActividadEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -183,6 +183,25 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE actividades ADD COLUMN pista TEXT NOT NULL DEFAULT ''")
+                // Completa el banco conocido con ayudas específicas, conservando preguntas y respuestas.
+                BancoActividades.preguntas.forEach { pregunta ->
+                    db.execSQL(
+                        "UPDATE actividades SET pista = ? WHERE titulo = ? AND pregunta = ? AND asignaturaId = ? AND pista = ''",
+                        arrayOf(PistasIniciales.paraPregunta(pregunta.titulo, pregunta.asignatura.id),
+                            pregunta.titulo, pregunta.enunciado, pregunta.asignatura.id)
+                    )
+                }
+                // Las preguntas personalizadas reciben una estrategia general revisable por su docente.
+                listOf("lenguaje", "matematica", "ciencias", "historia").forEach { asignatura ->
+                    db.execSQL("UPDATE actividades SET pista = ? WHERE asignaturaId = ? AND pista = ''",
+                        arrayOf(PistasIniciales.general(asignatura), asignatura))
+                }
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -197,6 +216,7 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_4_5,
                         MIGRATION_5_6,
                         MIGRATION_6_7,
+                        MIGRATION_7_8,
                     )
                     .build()
                     .also { instancia = it }

@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +31,7 @@ fun ResumenDocenteScreen(
     onAbrirEstudiante: (Long) -> Unit = {},
     resumenViewModel: ResumenDocenteViewModel = viewModel()
 ) {
+    DocenteTheme {
     val estado by resumenViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(docenteId) {
@@ -52,19 +58,19 @@ fun ResumenDocenteScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            TextButton(onClick = onVolver) {
+            BotonVolver(onClick = onVolver) {
                 Text("Volver")
             }
         }
 
         item {
-            Text(
-                text = when {
+            EncabezadoDocente(
+                titulo = when {
                     estudianteId != 0L -> "Avance del estudiante"
                     cursoId != 0L -> "Resultados · ${curso?.nombre ?: "Curso"}"
                     else -> "Resultados por curso"
                 },
-                style = MaterialTheme.typography.headlineMedium
+                detalle = "Reconoce los avances y descubre dónde ofrecer más apoyo."
             )
         }
 
@@ -274,6 +280,7 @@ fun ResumenDocenteScreen(
                 }
             }
         }
+    }
     }
 }
 

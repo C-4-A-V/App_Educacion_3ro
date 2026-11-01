@@ -1,5 +1,7 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -26,6 +28,7 @@ fun PanelDocenteScreen(
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel()
 ) {
+    DocenteTheme {
     val compacto = claseAnchoVentana() == WindowWidthSizeClass.Compact
     NavigationSuiteScaffold(
         modifier = modifier,
@@ -58,5 +61,6 @@ fun PanelDocenteScreen(
                 Modifier.padding(padding), cursosViewModel
             )
         }
+    }
     }
 }

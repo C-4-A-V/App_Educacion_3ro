@@ -12,10 +12,16 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
+enum class AnimoPudu { Tranquilo, Pensando, Alegre }
+
 /** Ilustración vectorial local: no requiere imágenes ni conexión. */
 @Composable
-fun PuduExplorador(modifier: Modifier = Modifier) {
-    Canvas(modifier.size(112.dp).semantics { contentDescription = "Pudú explorador" }) {
+fun PuduExplorador(modifier: Modifier = Modifier, animo: AnimoPudu = AnimoPudu.Tranquilo) {
+    Canvas(modifier.size(112.dp).semantics { contentDescription = when (animo) {
+            AnimoPudu.Alegre -> "Pudú explorador celebrando tu esfuerzo"
+            AnimoPudu.Pensando -> "Pudú explorador pensando contigo"
+            else -> "Pudú explorador"
+        } }) {
         val escala = size.minDimension / 112f
         fun punto(x: Float, y: Float) = Offset(x * escala, y * escala)
         val pelaje = Color(0xFFB87546)
@@ -34,6 +40,14 @@ fun PuduExplorador(modifier: Modifier = Modifier) {
         drawOval(Color(0xFF34271F), punto(50f, 72f), Size(12 * escala, 8 * escala))
         drawLine(Color(0xFF34271F), punto(56f, 79f), punto(56f, 84f), 2 * escala)
         drawLine(Color(0xFF34271F), punto(56f, 84f), punto(61f, 87f), 2 * escala)
+        if (animo == AnimoPudu.Alegre) {
+            drawArc(Color(0xFF34271F), 10f, 160f, false, punto(45f, 77f),
+                Size(22 * escala, 13 * escala), style = androidx.compose.ui.graphics.drawscope.Stroke(2.5f * escala))
+            drawCircle(Color(0xFFFFCC55), 4 * escala, punto(14f, 57f))
+            drawCircle(Color(0xFFFFCC55), 3 * escala, punto(99f, 44f))
+        } else if (animo == AnimoPudu.Pensando) {
+            drawLine(Color(0xFF34271F), punto(36f, 54f), punto(45f, 51f), 2 * escala)
+        }
         val panuelo = Path().apply {
             moveTo(30 * escala, 95 * escala)
             lineTo(82 * escala, 95 * escala)

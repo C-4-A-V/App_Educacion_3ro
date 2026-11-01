@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EstudianteDao {
 
+    @Query("UPDATE estudiantes SET fotoRuta = :ruta WHERE id = :estudianteId")
+    suspend fun actualizarFotoPerfil(estudianteId: Long, ruta: String): Int
+
     @Insert
     suspend fun insertar(estudiante: EstudianteEntity): Long
 

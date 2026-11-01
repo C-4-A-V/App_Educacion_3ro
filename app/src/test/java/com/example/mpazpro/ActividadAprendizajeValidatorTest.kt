@@ -15,6 +15,23 @@ class ActividadAprendizajeValidatorTest {
         explicacion = "Dos grupos de dos forman cuatro."
     )
 
+    @Test fun pistaEsOpcionalLimitadaYSeNormaliza() {
+        assertNull(ActividadValidator.validar(formulario().copy(pista = "")))
+        assertNull(ActividadValidator.validar(formulario().copy(pista = "a".repeat(500))))
+        assertNotNull(ActividadValidator.errores(formulario().copy(pista = "a".repeat(501))).pista)
+        assertEquals("Dibuja los grupos.", formulario().copy(pista = "  Dibuja los grupos.  ").normalizado().pista)
+    }
+
+    @Test fun bancoCompletoIncluyeAyudasDistintasDeLaExplicacion() {
+        val actividades = com.example.mpazpro.data.local.BancoActividades.entidades(1)
+        assertEquals(40, actividades.size)
+        actividades.forEach {
+            assertTrue(it.pista.isNotBlank())
+            assertTrue(it.pista.length <= 500)
+            assertNotEquals(it.explicacion, it.pista)
+        }
+    }
+
     @Test fun permitePracticaYEvaluacionConExplicacion() {
         assertNull(ActividadValidator.validar(formulario()))
         assertNull(ActividadValidator.validar(formulario().copy(maxIntentos = 1)))

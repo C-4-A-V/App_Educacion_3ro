@@ -50,6 +50,6 @@ class FormularioActividadUiTest {
         mostrar("Escribe una explicación de hasta 1000 caracteres.")
         compose.onNodeWithText("Escribe una explicación de hasta 1000 caracteres.").assertIsDisplayed()
         mostrar("Marca la alternativa correcta.")
-        compose.onNodeWithText("Marca la alternativa correcta.").assertIsDisplayed()
+        compose.onNodeWithText("Marca la alternativa correcta.").performScrollTo().assertIsDisplayed()
     }
 }

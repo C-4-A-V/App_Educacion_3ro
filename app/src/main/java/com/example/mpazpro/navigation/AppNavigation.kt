@@ -1,6 +1,14 @@
 package com.example.mpazpro.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.mpazpro.ui.components.LocalDensidadOriginal
+import com.example.mpazpro.ui.theme.LocalModoOscuroEstudiante
+import com.example.mpazpro.ui.screens.PerfilEstudianteScreen
+import com.example.mpazpro.ui.theme.LocalModoOscuroDocente
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -64,6 +72,26 @@ fun AppNavigation(
         return
     }
 
+    // Solo DocenteTheme consume esta preferencia; las pantallas de estudiantes conservan su tema.
+    val modoOscuroDocente = estadoPerfil.takeIf {
+        it.docente?.id == estadoLogin.docente?.id && estadoLogin.docente != null
+    }?.modoOscuro
+    val entradaActual by navController.currentBackStackEntryAsState()
+    val areaEstudiante = entradaActual?.destination?.route in setOf(
+        Screen.InicioEstudiante.route, Screen.PerfilEstudiante.route,
+        Screen.Asignatura.route, Screen.ResolverActividad.route
+    ) && estadoEstudiante.seleccionado != null
+    val densidadActual = LocalDensity.current
+    val densidadBase = LocalDensidadOriginal.current ?: densidadActual
+    val densidadEstudiante = Density(
+        densidadBase.density,
+        densidadBase.fontScale * if (estadoEstudiante.preferencias.textoGrande) 1.15f else 1f
+    )
+    CompositionLocalProvider(
+        LocalModoOscuroDocente provides modoOscuroDocente,
+        LocalModoOscuroEstudiante provides if (areaEstudiante) estadoEstudiante.preferencias.modoOscuro else null,
+        LocalDensity provides if (areaEstudiante) densidadEstudiante else densidadActual
+    ) {
     NavHost(
         navController = navController,
         startDestination = Screen.Bienvenida.route,
@@ -587,6 +615,34 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.PerfilEstudiante.route) {
+            if (estadoEstudiante.seleccionado == null) {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                PerfilEstudianteScreen(
+                    estado = estadoEstudiante,
+                    onVolver = { navController.popBackStack() },
+                    onContinuar = {
+                        val pendiente = estadoEstudiante.paraContinuar
+                        navController.popBackStack()
+                        if (pendiente != null) {
+                            navController.navigate(Screen.Asignatura.crearRuta(pendiente.asignaturaId)) {
+                                launchSingleTop = true
+                            }
+                            navController.navigate(Screen.ResolverActividad.crearRuta(pendiente.id)) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onOscuro = accesoEstudianteViewModel::cambiarOscuro,
+                    onTextoGrande = accesoEstudianteViewModel::cambiarTextoGrande,
+                    onObjetivo = accesoEstudianteViewModel::cambiarObjetivo,
+                    onFoto = accesoEstudianteViewModel::guardarFotoPerfil,
+                    onErrorFoto = accesoEstudianteViewModel::mostrarErrorPerfil
+                )
+            }
+        }
+
         composable(Screen.InicioEstudiante.route) {
             val docente = estadoLogin.docente // safety
             val estudiante = estadoEstudiante.seleccionado
@@ -596,6 +652,18 @@ fun AppNavigation(
                     estudiante = estudiante,
                     progreso = estadoEstudiante.progreso,
                     mensaje = estadoEstudiante.mensaje,
+                    paraContinuar = estadoEstudiante.paraContinuar,
+                    onAbrirPerfil = {
+                        navController.navigate(Screen.PerfilEstudiante.route) { launchSingleTop = true }
+                    },
+                    onContinuar = { pendiente ->
+                        navController.navigate(Screen.Asignatura.crearRuta(pendiente.asignaturaId)) {
+                            launchSingleTop = true
+                        }
+                        navController.navigate(Screen.ResolverActividad.crearRuta(pendiente.id)) {
+                            launchSingleTop = true
+                        }
+                    },
                     onAbrirAsignatura = { asignaturaId ->
                         navController.navigate(
                             Screen.Asignatura.crearRuta(
@@ -714,6 +782,12 @@ fun AppNavigation(
                     estudiante = estudiante,
                     onVolver = {
                         navController.popBackStack()
+                    },
+                    onSiguiente = { siguienteId ->
+                        navController.navigate(Screen.ResolverActividad.crearRuta(siguienteId)) {
+                            popUpTo(entrada.destination.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -753,5 +827,6 @@ fun AppNavigation(
                 )
             }
         }
+    }
     }
 }

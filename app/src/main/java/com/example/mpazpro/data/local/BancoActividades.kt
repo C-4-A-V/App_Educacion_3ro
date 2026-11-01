@@ -61,7 +61,8 @@ object BancoActividades {
             pregunta = it.enunciado,
             alternativaA = it.opciones[0], alternativaB = it.opciones[1],
             alternativaC = it.opciones[2], alternativaD = it.opciones[3],
-            respuestaCorrecta = it.correcta, maxIntentos = 3, explicacion = it.explicacion
+            respuestaCorrecta = it.correcta, maxIntentos = 3, explicacion = it.explicacion,
+            pista = PistasIniciales.paraPregunta(it.titulo, it.asignatura.id)
         )
     }
 }

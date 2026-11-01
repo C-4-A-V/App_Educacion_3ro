@@ -27,7 +27,8 @@ fun SelectorFotoEstudiante(
     errorFoto: String?,
     habilitado: Boolean,
     onSeleccion: (Uri) -> Unit,
-    onError: (String) -> Unit
+    onError: (String) -> Unit,
+    mostrarVistaPrevia: Boolean = true
 ) {
     val context = LocalContext.current
     val almacenamiento = remember(context) { FotoStorage(context) }
@@ -94,10 +95,12 @@ fun SelectorFotoEstudiante(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        ImagenInteligente(
-            ruta = fotoRuta,
-            descripcion = "Fotografía seleccionada"
-        )
+        if (mostrarVistaPrevia) {
+            ImagenInteligente(
+                ruta = fotoRuta,
+                descripcion = "Fotografía seleccionada"
+            )
+        }
 
         OutlinedButton(
             enabled = habilitado && !esperandoResultado,

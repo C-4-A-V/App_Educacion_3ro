@@ -1,8 +1,14 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -17,7 +23,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.example.mpazpro.ui.components.BotonSecundario
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +50,7 @@ fun LoginDocenteScreen(
     modifier: Modifier = Modifier,
     loginViewModel: LoginDocenteViewModel = viewModel()
 ) {
+    DocenteTheme {
     // Observa el estado y actualiza la interfaz cuando cambia.
     val estado by loginViewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -67,10 +74,18 @@ fun LoginDocenteScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Acceso docente",
-            style = MaterialTheme.typography.headlineMedium
+        EncabezadoDocente(
+            titulo = "Un espacio para enseñar",
+            detalle = "Organiza tus cursos y acompaña cada aprendizaje."
         )
+        androidx.compose.material3.Card(
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Acceso docente", style = MaterialTheme.typography.titleLarge)
 
         OutlinedTextField(
             value = estado.correo,
@@ -141,6 +156,7 @@ fun LoginDocenteScreen(
             modifier = Modifier
                 .padding(top = 20.dp)
                 .fillMaxWidth()
+                .then(Modifier.defaultMinSize(minHeight = 52.dp))
         ) {
             Text(if (estado.cargando) "Comprobando…" else "Ingresar")
         }
@@ -153,7 +169,7 @@ fun LoginDocenteScreen(
             )
         }
 
-        TextButton(
+        BotonSecundario(
             onClick = onRegistrar,
             enabled = !estado.cargando,
             modifier = Modifier.padding(top = 12.dp)
@@ -161,13 +177,16 @@ fun LoginDocenteScreen(
             Text("No tengo cuenta: registrarme")
         }
 
-        TextButton(
+        BotonVolver(
             onClick = onVolver,
             enabled = !estado.cargando,
             modifier = Modifier.padding(top = 12.dp)
         ) {
             Text("Volver al inicio")
         }
+        }
+        }
+    }
     }
 }
 

@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
@@ -43,7 +48,8 @@ fun CrearActividadScreen(
         actividadViewModel::actualizarPregunta, actividadViewModel::actualizarExplicacion,
         actividadViewModel::actualizarAlternativa, actividadViewModel::seleccionarRespuesta,
         actividadViewModel::actualizarMaxIntentos,
-        { actividadViewModel.guardar(asignatura.id) }, modifier
+        { actividadViewModel.guardar(asignatura.id) }, modifier,
+        onPista = actividadViewModel::actualizarPista
     )
 }
 
@@ -60,8 +66,10 @@ internal fun CrearActividadContenido(
     onCorrecta: (Int) -> Unit,
     onModalidad: (Int) -> Unit,
     onGuardar: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPista: (String) -> Unit = {}
 ) {
+    DocenteTheme {
     val f = estado.formulario
     val errores = estado.errores
     val editable = !estado.cargando && !estado.guardando && !estado.guardado
@@ -70,8 +78,8 @@ internal fun CrearActividadContenido(
         contentPadding = PaddingValues(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { TextButton(onClick = onVolver, enabled = !estado.guardando) { Text("Volver") } }
-        item { Text("Crear actividad", style = MaterialTheme.typography.headlineMedium) }
+        item { BotonVolver(onClick = onVolver, enabled = !estado.guardando) { Text("Volver") } }
+        item { EncabezadoDocente("Crear actividad", "Diseña una pregunta clara y entrega una explicación que ayude a aprender.") }
         item {
             AnimatedVisibility(estado.cargando || estado.guardando) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -131,6 +139,10 @@ internal fun CrearActividadContenido(
                 }
             }
             item {
+                CampoActividad(f.pista, "Pista para la práctica (opcional)", editable, errores.pista, true, onPista)
+                Text("Hasta 500 caracteres. Sugiere una estrategia sin dar la respuesta. Solo se muestra en prácticas.", style = MaterialTheme.typography.bodySmall)
+            }
+            item {
                 CampoActividad(f.explicacion, "Explicación de la respuesta correcta", editable, errores.explicacion, true, onExplicacion)
                 Text("Se mostrará al acertar o terminar los intentos.", style = MaterialTheme.typography.bodySmall)
             }
@@ -140,6 +152,7 @@ internal fun CrearActividadContenido(
                 }
             }
         }
+    }
     }
 }
 

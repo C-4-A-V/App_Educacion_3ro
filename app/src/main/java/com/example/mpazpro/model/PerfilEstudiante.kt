@@ -1,6 +1,7 @@
 package com.example.mpazpro.model
 
 import com.example.mpazpro.data.local.CursoEntity
+import com.example.mpazpro.data.repository.PreferenciasPerfilEstudiante
 
 // Información que necesita el selector de estudiantes.
 data class PerfilEstudiante(
@@ -19,5 +20,10 @@ data class AccesoEstudianteUiState(
     val cargando: Boolean = true,
     val ingresando: Boolean = false,
     val mensaje: String? = null,
-    val progreso: ProgresoEstudiante = ProgresoEstudiante()
+    val progreso: ProgresoEstudiante = ProgresoEstudiante(),
+    val paraContinuar: ActividadParaContinuar? = null,
+    val preferencias: PreferenciasPerfilEstudiante = PreferenciasPerfilEstudiante(),
+    val preferenciasCargadas: Boolean = false,
+    val guardandoPerfil: Boolean = false,
+    val mensajePerfil: String? = null
 )

@@ -8,6 +8,8 @@ import com.example.mpazpro.data.local.DocenteEntity
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.media.FotoStorage
 import com.example.mpazpro.data.repository.PreferenciasLectura
+import com.example.mpazpro.data.repository.PreferenciasDocente
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.CancellationException
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 
 data class PerfilDocenteUiState(
     val docente: DocenteEntity? = null,
+    val modoOscuro: Boolean? = null,
     val cargando: Boolean = true,
     val guardando: Boolean = false,
     val mensaje: String? = null
@@ -35,6 +38,7 @@ class PerfilDocenteViewModel(
 
     private val fotos = FotoStorage(application)
     private val preferencias = PreferenciasLectura(application)
+    private val preferenciasDocente = PreferenciasDocente(application)
     val lectura = preferencias.modoLectura.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _uiState = MutableStateFlow(
@@ -59,10 +63,14 @@ class PerfilDocenteViewModel(
 
         consulta = viewModelScope.launch {
             try {
-                dao.observarPorId(docenteId).collect { docente ->
+                combine(
+                    dao.observarPorId(docenteId),
+                    preferenciasDocente.modoOscuro(docenteId)
+                ) { docente, oscuro -> docente to oscuro }.collect { (docente, oscuro) ->
                     _uiState.update {
                         it.copy(
                             docente = docente,
+                            modoOscuro = oscuro,
                             cargando = false,
                             mensaje = if (docente == null) {
                                 "Perfil no disponible."
@@ -80,6 +88,26 @@ class PerfilDocenteViewModel(
                         cargando = false,
                         mensaje = "No se pudo cargar el perfil."
                     )
+                }
+            }
+        }
+    }
+
+    fun cambiarModoOscuro(activado: Boolean) {
+        val docenteId = _uiState.value.docente?.id ?: return
+        if (_uiState.value.guardando) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                preferenciasDocente.guardarModoOscuro(docenteId, activado)
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "Apariencia guardada para tu cuenta.") }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "No se pudo guardar la apariencia. Inténtalo nuevamente.") }
                 }
             }
         }

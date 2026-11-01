@@ -8,12 +8,13 @@ data class ActividadErrores(
     val instrucciones: String? = null,
     val pregunta: String? = null,
     val explicacion: String? = null,
+    val pista: String? = null,
     val alternativas: List<String?> = List(4) { null },
     val respuestaCorrecta: String? = null,
     val modalidad: String? = null
 ) {
     val primerError: String?
-        get() = listOf(titulo, instrucciones, pregunta, explicacion, modalidad)
+        get() = listOf(titulo, instrucciones, pregunta, explicacion, pista, modalidad)
             .plus(alternativas).plus(respuestaCorrecta).firstOrNull { it != null }
     val hayErrores: Boolean get() = primerError != null
 }
@@ -29,6 +30,7 @@ object ActividadValidator {
             instrucciones = if (datos.instrucciones.length !in 1..1000) "Escribe instrucciones de hasta 1000 caracteres." else null,
             pregunta = if (datos.pregunta.length !in 5..500) "Usa entre 5 y 500 caracteres." else null,
             explicacion = if (datos.explicacion.length !in 1..1000) "Escribe una explicación de hasta 1000 caracteres." else null,
+            pista = if (datos.pista.length > 500) "Usa una pista de hasta 500 caracteres." else null,
             alternativas = List(4) { indice ->
                 val texto = datos.alternativas.getOrNull(indice)
                 when {

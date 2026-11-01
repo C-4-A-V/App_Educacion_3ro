@@ -1,5 +1,7 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.components.BotonVolver
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -52,8 +54,8 @@ fun AsignaturaScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            TextButton(onClick = onVolver) {
-                Text("← Volver a mis asignaturas")
+            BotonVolver(onClick = onVolver) {
+                Text("Volver a mis asignaturas")
             }
         }
 
@@ -220,7 +222,8 @@ fun AsignaturaScreen(
                                 else -> "Evaluación · Comenzar"
                             },
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = if (actividad.resuelta) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onTertiary,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }

@@ -1,5 +1,10 @@
 package com.example.mpazpro.ui.screens
 
+import com.example.mpazpro.ui.theme.DocenteTheme
+import com.example.mpazpro.ui.theme.EncabezadoDocente
+
+import com.example.mpazpro.ui.components.BotonVolver
+
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +30,7 @@ fun ResultadosActividadScreen(
     modifier: Modifier = Modifier,
     resultadosViewModel: ResultadosActividadViewModel = viewModel()
 ) {
+    DocenteTheme {
     val estado by resultadosViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -43,7 +49,7 @@ fun ResultadosActividadScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            TextButton(onClick = onVolver) {
+            BotonVolver(onClick = onVolver) {
                 Text("Volver a las actividades")
             }
         }
@@ -51,10 +57,9 @@ fun ResultadosActividadScreen(
         val actividad = estado.actividad
 
         item {
-            Text(
-                text = actividad?.titulo ?: "Resultados de la actividad",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+            EncabezadoDocente(
+                titulo = actividad?.titulo ?: "Resultados de la actividad",
+                detalle = "Una mirada al aprendizaje para orientar los próximos pasos."
             )
         }
 
@@ -75,6 +80,49 @@ fun ResultadosActividadScreen(
                             text = it.pregunta,
                             style = MaterialTheme.typography.titleMedium
                         )
+                    }
+                }
+            }
+        }
+
+        if (actividad != null) {
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Ayuda para aprender", style = MaterialTheme.typography.titleMedium)
+                        Text(if (actividad.maxIntentos == 3) "El estudiante puede pedir esta pista durante la práctica."
+                            else "Esta es una evaluación: las pistas no se muestran al estudiante.")
+                        OutlinedTextField(
+                            value = estado.pistaBorrador,
+                            onValueChange = resultadosViewModel::actualizarPista,
+                            label = { Text("Pista") },
+                            supportingText = { Text("Sugiere una estrategia sin revelar la respuesta. Máximo 500 caracteres.") },
+                            isError = estado.pistaBorrador.trim().length > 500,
+                            minLines = 2, maxLines = 5,
+                            enabled = !estado.guardandoPista,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Button(
+                            onClick = resultadosViewModel::guardarPista,
+                            enabled = !estado.guardandoPista && estado.pistaBorrador.trim().length <= 500 &&
+                                estado.pistaBorrador.trim() != actividad.pista,
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) { Text(if (estado.guardandoPista) "Guardando…" else "Guardar pista") }
+                        estado.mensajePista?.let { Text(it) }
+                    }
+                }
+            }
+            if (estado.estudiantesParaReforzar > 0) {
+                item {
+                    Card(
+                        Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    ) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Una oportunidad para reforzar", style = MaterialTheme.typography.titleMedium)
+                            Text("${estado.estudiantesParaReforzar} estudiantes necesitaron varios intentos o terminaron sin acertar.")
+                            Text("Puedes revisar esta pregunta con el curso y probar otra explicación. Estos datos orientan el apoyo; no son un diagnóstico.")
+                        }
                     }
                 }
             }
@@ -120,6 +168,7 @@ fun ResultadosActividadScreen(
                             }
                             context.startActivity(Intent.createChooser(intent, "Exportar reporte JSON"))
                         },
+                        enabled = !estado.cargando && estado.actividad != null && estado.mensaje == null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Exportar reporte JSON")
@@ -142,6 +191,9 @@ fun ResultadosActividadScreen(
                     text = mensaje,
                     color = MaterialTheme.colorScheme.error
                 )
+                OutlinedButton(onClick = resultadosViewModel::recargar, enabled = !estado.guardandoPista) {
+                    Text("Intentar nuevamente")
+                }
             }
         }
 
@@ -212,7 +264,7 @@ fun ResultadosActividadScreen(
                         )
 
                         val colorEstado = when {
-                            !resultado.respondida -> MaterialTheme.colorScheme.outline
+                            !resultado.respondida -> MaterialTheme.colorScheme.onSurfaceVariant
                             resultado.correcta == true -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.error
                         }
@@ -226,5 +278,6 @@ fun ResultadosActividadScreen(
                 }
             }
         }
+    }
     }
 }

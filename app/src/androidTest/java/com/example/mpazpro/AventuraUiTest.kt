@@ -48,6 +48,52 @@ class AventuraUiTest {
         compose.runOnIdle { assertEquals("historia", asignatura) }
     }
 
+    @Test fun preguntaCompletadaPermiteContinuarOGuardar() {
+        var siguientes = 0
+        var salidas = 0
+        compose.setContent {
+            ResolverActividadContenido(
+                ResolverActividadUiState(
+                    actividad = actividad(), cargando = false, cargandoContinuacion = false,
+                    siguienteActividadId = 2,
+                    intento = IntentoActividadEntity(
+                        estudianteId = 1, actividadId = 1, respuestaElegida = 0,
+                        respuestaCorrecta = 0, correcta = true, finalizada = true
+                    )
+                ),
+                onVolver = { salidas++ }, onSeleccionar = {}, onEnviar = {}, onReintentar = {},
+                onSiguiente = { siguientes++ }
+            )
+        }
+        compose.onNodeWithText("Terminar actividad").assertDoesNotExist()
+        compose.onNodeWithText("Siguiente pregunta").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Guardar hasta aquí").assertIsDisplayed().performClick()
+        compose.runOnIdle {
+            assertEquals(1, siguientes)
+            assertEquals(1, salidas)
+        }
+    }
+
+    @Test fun ultimaPreguntaSoloOfreceTerminar() {
+        var salidas = 0
+        compose.setContent {
+            ResolverActividadContenido(
+                ResolverActividadUiState(
+                    actividad = actividad(), cargando = false, cargandoContinuacion = false,
+                    intento = IntentoActividadEntity(
+                        estudianteId = 1, actividadId = 1, respuestaElegida = 0,
+                        respuestaCorrecta = 0, correcta = true, finalizada = true
+                    )
+                ),
+                onVolver = { salidas++ }, onSeleccionar = {}, onEnviar = {}, onReintentar = {}
+            )
+        }
+        compose.onNodeWithText("Guardar hasta aquí").assertDoesNotExist()
+        compose.onNodeWithText("Siguiente pregunta").assertDoesNotExist()
+        compose.onNodeWithText("Terminar actividad").assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(1, salidas) }
+    }
+
     @Test fun noPermiteEnviarSinSeleccion() {
         compose.setContent {
             MPAZPROTheme {

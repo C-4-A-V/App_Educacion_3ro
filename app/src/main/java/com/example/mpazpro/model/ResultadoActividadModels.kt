@@ -15,9 +15,13 @@ data class EstudianteResultadoItem(
 data class ResultadosActividadUiState(
     val actividad: ActividadEntity? = null,
     val resultados: List<EstudianteResultadoItem> = emptyList(),
+    val pistaBorrador: String = "",
+    val guardandoPista: Boolean = false,
+    val mensajePista: String? = null,
     val cargando: Boolean = true,
     val mensaje: String? = null
 ) {
+    val estudiantesParaReforzar: Int get() = resultados.count { it.intentosUsados > 1 || (it.respondida && it.correcta == false) }
     val totalEstudiantes: Int get() = resultados.size
     val totalRespondidas: Int get() = resultados.count { it.respondida }
     val totalCorrectas: Int get() = resultados.count { it.respondida && it.correcta == true }
