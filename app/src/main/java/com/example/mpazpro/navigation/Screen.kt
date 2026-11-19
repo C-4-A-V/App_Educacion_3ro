@@ -44,6 +44,8 @@ sealed class Screen(val route: String) {
 
     data object PerfilEstudiante : Screen("perfil_estudiante")
 
+    data object AprendeConPudu : Screen("aprende_con_pudu")
+
     data object InicioEstudiante :
         Screen("inicio_estudiante")
 

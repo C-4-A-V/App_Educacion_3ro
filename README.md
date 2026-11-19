@@ -25,6 +25,7 @@ El registro de autores de Git no sustituye la confirmación de los integrantes n
 - Prácticas de hasta tres intentos y evaluaciones de un intento.
 - Pistas opcionales de hasta 500 caracteres: creación y edición docente, visibles solo en prácticas.
 - Pudú junto al avance, ayudas desplegables, celebración de asignatura y acceso directo a una pregunta pendiente.
+- Aprende con Pudú: curiosidades por tema con fuentes consultables, lectura en voz alta y selección sin repeticiones hasta agotar el ciclo de cada tema durante la sesión. El dato de la capital de Chile se consulta mediante Retrofit al Banco Mundial; hay datos locales cuando no se puede consultar.
 - Indicador docente de estudiantes que necesitaron más intentos o finalizaron sin acertar.
 - Bienvenida personalizada después de seleccionar el perfil del estudiante.
 - Perfil estudiantil desde el saludo: foto con cámara/galería, objetivo escrito por el estudiante y guardado por perfil (hasta 160 caracteres), progreso y estrellas.

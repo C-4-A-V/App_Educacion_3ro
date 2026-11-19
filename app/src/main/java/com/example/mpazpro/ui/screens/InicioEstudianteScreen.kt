@@ -30,7 +30,8 @@ fun InicioEstudianteScreen(
     mensaje: String? = null,
     paraContinuar: ActividadParaContinuar? = null,
     onContinuar: (ActividadParaContinuar) -> Unit = {},
-    onAbrirPerfil: () -> Unit = {}
+    onAbrirPerfil: () -> Unit = {},
+    onAprendeConPudu: () -> Unit = {}
 ) {
     BackHandler(onBack = onSalir)
     val columnas = columnasPara(claseAnchoVentana())
@@ -88,6 +89,12 @@ fun InicioEstudianteScreen(
                             }
                         }
                     }
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Button(
+                        onClick = onAprendeConPudu,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                    ) { Text("✨ Aprende con Pudú") }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Card(

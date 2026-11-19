@@ -78,7 +78,7 @@ fun AppNavigation(
     }?.modoOscuro
     val entradaActual by navController.currentBackStackEntryAsState()
     val areaEstudiante = entradaActual?.destination?.route in setOf(
-        Screen.InicioEstudiante.route, Screen.PerfilEstudiante.route,
+        Screen.InicioEstudiante.route, Screen.PerfilEstudiante.route, Screen.AprendeConPudu.route,
         Screen.Asignatura.route, Screen.ResolverActividad.route
     ) && estadoEstudiante.seleccionado != null
     val densidadActual = LocalDensity.current
@@ -656,6 +656,9 @@ fun AppNavigation(
                     onAbrirPerfil = {
                         navController.navigate(Screen.PerfilEstudiante.route) { launchSingleTop = true }
                     },
+                    onAprendeConPudu = {
+                        navController.navigate(Screen.AprendeConPudu.route) { launchSingleTop = true }
+                    },
                     onContinuar = { pendiente ->
                         navController.navigate(Screen.Asignatura.crearRuta(pendiente.asignaturaId)) {
                             launchSingleTop = true
@@ -697,6 +700,16 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 }
+            }
+        }
+
+        composable(Screen.AprendeConPudu.route) {
+            if (estadoEstudiante.seleccionado == null) {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                com.example.mpazpro.ui.screens.AprendePuduScreen(
+                    onVolver = { navController.popBackStack() }
+                )
             }
         }
 
