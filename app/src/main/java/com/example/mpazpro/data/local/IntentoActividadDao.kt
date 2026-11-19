@@ -10,6 +10,23 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface IntentoActividadDao {
 
+    @Query("""
+        SELECT a.id AS actividadId, a.cursoId, e.id AS estudianteId, a.asignaturaId,
+            a.titulo, a.pregunta, a.maxIntentos, i.numero AS intentosUsados,
+            i.finalizada, i.correcta, i.respuestaElegida, i.respuestaCorrecta,
+            EXISTS(SELECT 1 FROM intentos_actividad err
+                WHERE err.estudianteId = e.id AND err.actividadId = a.id AND err.correcta = 0) AS tuvoError
+        FROM estudiantes e
+        JOIN cursos c ON c.id = e.cursoId
+        JOIN actividades a ON a.cursoId = c.id
+        JOIN intentos_actividad i ON i.estudianteId = e.id AND i.actividadId = a.id
+            AND i.numero = (SELECT MAX(ultimo.numero) FROM intentos_actividad ultimo
+                WHERE ultimo.estudianteId = e.id AND ultimo.actividadId = a.id)
+        WHERE c.docenteId = :docenteId
+        ORDER BY a.asignaturaId, a.creadaEn DESC, a.id DESC, e.nombre
+    """)
+    fun observarDetalleDocente(docenteId: Long): Flow<List<com.example.mpazpro.model.ResultadoPreguntaDocente>>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertar(
         intento: IntentoActividadEntity

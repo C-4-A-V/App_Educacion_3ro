@@ -19,17 +19,18 @@ El registro de autores de Git no sustituye la confirmación de los integrantes n
 ## Funcionalidades
 
 - Acceso y registro local de docentes, con hash y salt de contraseña.
-- Creación de cursos y registro de estudiantes con fotografía.
+- Creación de cursos y registro de estudiantes con fotografía, RUT validado y PIN de cuatro dígitos configurado por el docente.
 - Cámara mediante TakePicture, galería mediante GetContent y FileProvider de alcance limitado.
 - Creación de actividades con cuatro alternativas, validaciones por campo y explicación de la respuesta.
 - Prácticas de hasta tres intentos y evaluaciones de un intento.
 - Pistas opcionales de hasta 500 caracteres: creación y edición docente, visibles solo en prácticas.
 - Pudú junto al avance, ayudas desplegables, celebración de asignatura y acceso directo a una pregunta pendiente.
 - Aprende con Pudú: curiosidades por tema con fuentes consultables, lectura en voz alta y selección sin repeticiones hasta agotar el ciclo de cada tema durante la sesión. El dato de la capital de Chile se consulta mediante Retrofit al Banco Mundial; hay datos locales cuando no se puede consultar.
-- Indicador docente de estudiantes que necesitaron más intentos o finalizaron sin acertar.
+- Informes docentes por estudiante y por pregunta: porcentaje de quienes tuvieron algún error y de quienes terminaron sin acertar, con el número de estudiantes que respondieron.
+- Retroalimentación del docente por estudiante y actividad, guardada localmente y visible desde el aviso de Pudú; los mensajes leídos siguen disponibles en el inicio del estudiante.
 - Bienvenida personalizada después de seleccionar el perfil del estudiante.
 - Perfil estudiantil desde el saludo: foto con cámara/galería, objetivo escrito por el estudiante y guardado por perfil (hasta 160 caracteres), progreso y estrellas.
-- Modo oscuro y texto grande guardados por perfil estudiantil en DataStore, independientes del área docente; nombre y curso se gestionan desde el docente.
+- Tres paletas (morado y rosado, azul y verde, rojo y amarillo), cada una con modo claro u oscuro. Estudiantes y docentes guardan su elección por separado; el docente también puede restaurar su apariencia original.
 - Una estrella por actividad acertada; el progreso cuenta actividades terminadas, sin duplicar reintentos.
 - Informes por estudiante, curso y asignatura y exportación JSON.
 - Cuadrículas de una, dos y tres columnas para ventanas compactas, medianas y expandidas.
@@ -61,7 +62,7 @@ Para cámara y galería, probar también en un teléfono físico. La captura pid
 
 La carga no modifica la contraseña de una cuenta Milo existente. Si ya tiene cursos, se utiliza el primero por ID. Las preguntas se agregan solo cuando no existe una actividad con el mismo curso, asignatura y título; no se borran actividades, estudiantes ni resultados.
 
-Son credenciales ficticias de demostración, no una cuenta externa ni un sistema de autenticación en la nube. Los estudiantes se registran desde el panel docente y seleccionan su perfil para ingresar.
+Son credenciales ficticias de demostración, no una cuenta externa ni un sistema de autenticación en la nube. El docente configura el RUT y PIN de cada estudiante; los perfiles anteriores quedan pendientes de configurar y conservan sus avances. El estudiante accede con RUT y PIN, que puede mostrar u ocultar.
 
 El banco es contenido original orientado al nivel escolar. El docente puede revisar su pertinencia; no se presenta como material certificado por MINEDUC.
 
@@ -91,7 +92,7 @@ El banco es contenido original orientado al nivel escolar. El docente puede revi
 | data/media | Importación privada y archivos temporales de imágenes |
 | navigation | Rutas reutilizables y NavHost |
 
-Room usa actualmente el esquema 8 con migraciones explícitas; no se borra la base de datos como mecanismo de actualización. La migración 7→8 agrega pistas sin borrar preguntas ni intentos: usa ayudas específicas para el banco conocido y estrategias generales por asignatura para preguntas personalizadas existentes, revisables por el docente. DataStore guarda la preferencia de lectura y la apariencia del docente por cuenta local, separadas de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
+Room usa actualmente el esquema 10 con migraciones explícitas; la migración 9→10 agrega mensajes docentes sin borrar los datos existentes; la migración 8→9 conserva los perfiles y avances existentes y deja pendiente la configuración de RUT y PIN. El RUT se guarda localmente y el PIN se almacena con hash y salt; este mecanismo local no equivale a autenticación remota segura. Después de cinco intentos incorrectos se bloquea el acceso durante un minuto, o el docente puede restablecerlo. Además, no se borra la base de datos como mecanismo de actualización. La migración 7→8 agrega pistas sin borrar preguntas ni intentos: usa ayudas específicas para el banco conocido y estrategias generales por asignatura para preguntas personalizadas existentes, revisables por el docente. DataStore guarda la preferencia de lectura y la apariencia del docente por cuenta local, separadas de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
 
 ## Pruebas
 

@@ -27,6 +27,15 @@ class ResumenDocenteViewModel(
     private var consulta: Job? = null
     private var docenteActual: Long? = null
 
+    suspend fun enviarMensaje(docenteId: Long, estudianteId: Long, actividadId: Long, texto: String) {
+        require(docenteActual == docenteId)
+        val limpio = texto.trim()
+        require(limpio.length in 1..500)
+        check(db.mensajeDocenteDao().enviar(docenteId, estudianteId, actividadId, limpio, System.currentTimeMillis()) > 0) {
+            "No se pudo enviar el mensaje."
+        }
+    }
+
     fun cargar(docenteId: Long) {
         if (
             docenteActual == docenteId &&
@@ -43,8 +52,10 @@ class ResumenDocenteViewModel(
             try {
                 combine(
                     db.cursoDao().observarPorDocente(docenteId),
-                    db.estudianteDao().observarAvancesDocente(docenteId)
-                ) { cursos, filas ->
+                    db.estudianteDao().observarAvancesDocente(docenteId),
+                    db.intentoActividadDao().observarDetalleDocente(docenteId),
+                    db.actividadDao().observarTodasDocente(docenteId)
+                ) { cursos, filas, resultados, actividades ->
 
                     val alumnos = filas
                         .groupBy { it.estudianteId }
@@ -76,6 +87,8 @@ class ResumenDocenteViewModel(
                     ResumenDocenteUiState(
                         cursos = cursos,
                         alumnos = alumnos,
+                        resultados = resultados,
+                        actividades = actividades,
                         cargando = false
                     )
                 }.collect {

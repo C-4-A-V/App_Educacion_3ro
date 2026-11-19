@@ -15,6 +15,22 @@ interface EstudianteDao {
     @Insert
     suspend fun insertar(estudiante: EstudianteEntity): Long
 
+    @Query("SELECT * FROM estudiantes WHERE rut = :rut LIMIT 1")
+    suspend fun buscarPorRut(rut: String): EstudianteEntity?
+
+    @Query("""
+        UPDATE estudiantes SET rut = :rut, pinHash = :hash, pinSalt = :salt,
+            pinIteraciones = :iteraciones, intentosFallidos = 0, bloqueadoHasta = 0
+        WHERE id = :estudianteId AND cursoId IN
+            (SELECT id FROM cursos WHERE id = :cursoId AND docenteId = :docenteId)
+    """)
+    suspend fun actualizarAcceso(estudianteId: Long, cursoId: Long, docenteId: Long,
+        rut: String, hash: String, salt: String, iteraciones: Int): Int
+
+    @Query("UPDATE estudiantes SET intentosFallidos = :intentos, bloqueadoHasta = :hasta WHERE id = :id")
+    suspend fun actualizarIntentos(id: Long, intentos: Int, hasta: Long)
+
+
     // Comprueba el curso y el docente al consultar estudiantes.
     @Query(
         """

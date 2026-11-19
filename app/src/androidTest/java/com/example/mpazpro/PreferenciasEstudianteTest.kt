@@ -3,6 +3,7 @@ package com.example.mpazpro
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.mpazpro.data.repository.PreferenciasEstudiante
+import com.example.mpazpro.data.repository.PaletaEstudiante
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
@@ -21,6 +22,8 @@ class PreferenciasEstudianteTest {
                 scope = CoroutineScope(Dispatchers.IO + trabajo1), produceFile = { archivo }
             ))
             assertNull(primero.observar(1).first().modoOscuro)
+            primero.guardarPaleta(1, PaletaEstudiante.OCEANO)
+            primero.guardarPaleta(2, PaletaEstudiante.ATARDECER)
             primero.guardarOscuro(1, true)
             primero.guardarTextoGrande(1, true)
             primero.guardarObjetivo(1, "Leer un cuento con mi familia")
@@ -32,6 +35,9 @@ class PreferenciasEstudianteTest {
                 scope = CoroutineScope(Dispatchers.IO + trabajo2), produceFile = { archivo }
             ))
             val perfil1 = segundo.observar(1).first()
+            assertEquals(PaletaEstudiante.OCEANO, perfil1.paleta)
+            assertEquals(PaletaEstudiante.ATARDECER, segundo.observar(2).first().paleta)
+            assertEquals(PaletaEstudiante.AVENTURA, segundo.observar(3).first().paleta)
             assertEquals(true, perfil1.modoOscuro)
             assertTrue(perfil1.textoGrande)
             assertEquals("Leer un cuento con mi familia", perfil1.objetivo)

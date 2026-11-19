@@ -6,6 +6,9 @@ import com.example.mpazpro.ui.theme.EncabezadoDocente
 import com.example.mpazpro.ui.components.BotonVolver
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import com.example.mpazpro.data.repository.PaletaEstudiante
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.contentDescription
@@ -88,6 +91,51 @@ fun PerfilDocenteScreen(
                         enabled = !estado.cargando && !estado.guardando && estado.docente?.id == docenteId,
                         modifier = Modifier.semantics { contentDescription = "Modo oscuro" }
                     )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Colores de mi espacio", style = MaterialTheme.typography.titleMedium)
+                    Text("Elige una combinación para tu cuenta.", style = MaterialTheme.typography.bodyMedium)
+                    if (estado.paleta == null) {
+                        Text("Actualmente usas la apariencia original.", style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (estado.paleta != null) {
+                        TextButton(
+                            onClick = perfilViewModel::restaurarPaleta,
+                            enabled = !estado.cargando && !estado.guardando && estado.docente?.id == docenteId
+                        ) { Text("Volver a la apariencia original") }
+                    }
+                    PaletaEstudiante.entries.forEach { paleta ->
+                        val habilitado = !estado.cargando && !estado.guardando && estado.docente?.id == docenteId
+                        Row(
+                            modifier = Modifier.fillMaxWidth().selectable(
+                                selected = estado.paleta == paleta,
+                                enabled = habilitado,
+                                role = Role.RadioButton,
+                                onClick = { perfilViewModel.cambiarPaleta(paleta) }
+                            ).heightIn(min = 48.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            RadioButton(selected = estado.paleta == paleta, onClick = null, enabled = habilitado)
+                            Column(Modifier.weight(1f)) {
+                                Text(paleta.titulo, style = MaterialTheme.typography.titleMedium)
+                                Text(paleta.detalle, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Text(when (paleta) {
+                                PaletaEstudiante.AVENTURA -> "💜🩷"
+                                PaletaEstudiante.OCEANO -> "💙💚"
+                                PaletaEstudiante.ATARDECER -> "❤️💛"
+                            })
+                        }
+                    }
                 }
             }
         }

@@ -22,6 +22,7 @@ data class AccesoEstudianteUiState(
     val mensaje: String? = null,
     val progreso: ProgresoEstudiante = ProgresoEstudiante(),
     val paraContinuar: ActividadParaContinuar? = null,
+    val mensajesDocente: List<MensajeEstudiante> = emptyList(),
     val preferencias: PreferenciasPerfilEstudiante = PreferenciasPerfilEstudiante(),
     val preferenciasCargadas: Boolean = false,
     val guardandoPerfil: Boolean = false,

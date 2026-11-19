@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,6 +17,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.luminance
 import com.example.mpazpro.data.repository.PreferenciasPerfilEstudiante
+import com.example.mpazpro.data.repository.PaletaEstudiante
 import com.example.mpazpro.model.AccesoEstudianteUiState
 import com.example.mpazpro.ui.components.*
 import com.example.mpazpro.ui.theme.AventuraTheme
@@ -26,6 +29,7 @@ fun PerfilEstudianteScreen(
     onVolver: () -> Unit,
     onContinuar: () -> Unit,
     onOscuro: (Boolean) -> Unit,
+    onPaleta: (PaletaEstudiante) -> Unit = {},
     onTextoGrande: (Boolean) -> Unit,
     onObjetivo: (String) -> Unit,
     onFoto: (Uri) -> Unit,
@@ -132,6 +136,35 @@ fun PerfilEstudianteScreen(
                     )) {
                         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text("A mi manera", style = MaterialTheme.typography.titleLarge)
+                            Text("🎨 Elige tus colores", style = MaterialTheme.typography.titleMedium)
+                            PaletaEstudiante.entries.forEach { paleta ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().selectable(
+                                        selected = estado.preferencias.paleta == paleta,
+                                        enabled = editable,
+                                        role = Role.RadioButton,
+                                        onClick = { onPaleta(paleta) }
+                                    ).heightIn(min = 48.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    RadioButton(
+                                        selected = estado.preferencias.paleta == paleta,
+                                        onClick = null,
+                                        enabled = editable
+                                    )
+                                    Column(Modifier.weight(1f)) {
+                                        Text(paleta.titulo, style = MaterialTheme.typography.titleMedium)
+                                        Text(paleta.detalle, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                    Text(when (paleta) {
+                                        PaletaEstudiante.AVENTURA -> "💜🩷"
+                                        PaletaEstudiante.OCEANO -> "💙💚"
+                                        PaletaEstudiante.ATARDECER -> "❤️💛"
+                                    }, style = MaterialTheme.typography.titleLarge)
+                                }
+                            }
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             AjustePerfilEstudiante(
                                 "Modo oscuro", "Elige cómo se ve tu aventura.",
                                 estado.preferencias.modoOscuro ?: (MaterialTheme.colorScheme.background.luminance() < .5f),

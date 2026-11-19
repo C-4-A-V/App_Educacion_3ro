@@ -8,6 +8,7 @@ import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.media.FotoStorage
 import com.example.mpazpro.data.repository.EstudianteRepository
 import com.example.mpazpro.model.EstudiantesUiState
+import com.example.mpazpro.validation.RutValidator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,6 +96,38 @@ class EstudiantesViewModel(
         }
     }
 
+    fun actualizarRut(valor: String) { _uiState.update { it.copy(rut = valor.take(12), errorAcceso = null) } }
+    fun actualizarPin(valor: String) { _uiState.update { it.copy(pin = valor.filter(Char::isDigit).take(4), errorAcceso = null) } }
+
+    fun editarAcceso(id: Long) {
+        val estudiante = _uiState.value.estudiantes.find { it.id == id } ?: return
+        _uiState.update { it.copy(editandoAccesoId = id, rut = estudiante.rut.orEmpty(), pin = "", errorAcceso = null) }
+    }
+
+    fun cancelarAcceso() { _uiState.update { it.copy(editandoAccesoId = null, rut = "", pin = "", errorAcceso = null) } }
+
+    fun guardarAcceso() {
+        val actual = _uiState.value
+        val id = actual.editandoAccesoId ?: return
+        val curso = actual.curso ?: return
+        val docenteId = contextoActual?.second ?: return
+        if (actual.guardando) return
+        if (RutValidator.normalizar(actual.rut) == null || !RutValidator.pinValido(actual.pin)) {
+            _uiState.update { it.copy(errorAcceso = "Ingresa un RUT válido y un PIN de 4 números.") }
+            return
+        }
+        _uiState.update { it.copy(guardando = true) }
+        viewModelScope.launch {
+            try {
+                repository.configurarAcceso(id, curso.id, docenteId, actual.rut, actual.pin)
+                _uiState.update { it.copy(guardando = false, editandoAccesoId = null, rut = "", pin = "", mensaje = "Acceso del estudiante actualizado.") }
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                _uiState.update { it.copy(guardando = false, errorAcceso = "No se pudo guardar. Revisa que el RUT no esté registrado.") }
+            }
+        }
+    }
+
     fun seleccionarFoto(uri: Uri) {
         val actual = _uiState.value
         if (actual.guardando || actual.importandoFoto) return
@@ -171,6 +204,10 @@ class EstudiantesViewModel(
             )
         }
 
+        if (RutValidator.normalizar(actual.rut) == null || !RutValidator.pinValido(actual.pin)) {
+            _uiState.update { it.copy(errorAcceso = "Ingresa un RUT válido y un PIN de 4 números.") }
+            return
+        }
         if (errorNombre != null || foto == null) return
 
         _uiState.update { it.copy(guardando = true) }
@@ -181,12 +218,17 @@ class EstudiantesViewModel(
                     cursoId = curso.id,
                     docenteId = docenteId,
                     nombre = nombreLimpio,
-                    fotoRuta = foto
+                    fotoRuta = foto,
+                    rut = actual.rut,
+                    pin = actual.pin
                 )
 
                 _uiState.update {
                     it.copy(
                         nombre = "",
+                        rut = "",
+                        pin = "",
+                        errorAcceso = null,
                         fotoRuta = null,
                         errorFoto = null,
                         guardando = false,
@@ -199,7 +241,7 @@ class EstudiantesViewModel(
                 _uiState.update {
                     it.copy(
                         guardando = false,
-                        mensaje = "No se pudo guardar el estudiante."
+                        mensaje = "No se pudo guardar. Revisa que el RUT no esté registrado."
                     )
                 }
             }

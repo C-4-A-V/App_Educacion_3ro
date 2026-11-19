@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Path
 fun FondoAventura(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val oscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val cielo = MaterialTheme.colorScheme.background
+    val colinaColor = MaterialTheme.colorScheme.primaryContainer
+    val colinaFrontalColor = MaterialTheme.colorScheme.secondaryContainer
     Box(modifier.background(cielo)) {
         Canvas(Modifier.matchParentSize()) {
             val amarillo = if (oscuro) Color(0xFF7D6128) else Color(0xFFFFDB72)
@@ -28,7 +30,7 @@ fun FondoAventura(modifier: Modifier = Modifier, content: @Composable BoxScope.(
                 lineTo(0f, size.height)
                 close()
             }
-            drawPath(colina, if (oscuro) Color(0xFF203E3A) else Color(0xFFD6F4DF))
+            drawPath(colina, colinaColor)
             val colinaFrente = Path().apply {
                 moveTo(0f, size.height * .97f)
                 quadraticTo(size.width * .7f, size.height * .84f, size.width, size.height * .90f)
@@ -36,7 +38,7 @@ fun FondoAventura(modifier: Modifier = Modifier, content: @Composable BoxScope.(
                 lineTo(0f, size.height)
                 close()
             }
-            drawPath(colinaFrente, if (oscuro) Color(0xFF254B44) else Color(0xFFBDEBCF))
+            drawPath(colinaFrente, colinaFrontalColor)
             listOf(.12f to .12f, .87f to .35f, .08f to .62f).forEach { (x, y) ->
                 val centro = Offset(size.width * x, size.height * y)
                 drawLine(amarillo, centro - Offset(9f, 0f), centro + Offset(9f, 0f), 4f)

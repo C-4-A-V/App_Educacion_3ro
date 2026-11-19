@@ -9,6 +9,7 @@ import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.media.FotoStorage
 import com.example.mpazpro.data.repository.PreferenciasLectura
 import com.example.mpazpro.data.repository.PreferenciasDocente
+import com.example.mpazpro.data.repository.PaletaEstudiante
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 data class PerfilDocenteUiState(
     val docente: DocenteEntity? = null,
     val modoOscuro: Boolean? = null,
+    val paleta: PaletaEstudiante? = null,
     val cargando: Boolean = true,
     val guardando: Boolean = false,
     val mensaje: String? = null
@@ -65,12 +67,14 @@ class PerfilDocenteViewModel(
             try {
                 combine(
                     dao.observarPorId(docenteId),
-                    preferenciasDocente.modoOscuro(docenteId)
-                ) { docente, oscuro -> docente to oscuro }.collect { (docente, oscuro) ->
+                    preferenciasDocente.modoOscuro(docenteId),
+                    preferenciasDocente.paleta(docenteId)
+                ) { docente, oscuro, paleta -> Triple(docente, oscuro, paleta) }.collect { (docente, oscuro, paleta) ->
                     _uiState.update {
                         it.copy(
                             docente = docente,
                             modoOscuro = oscuro,
+                            paleta = paleta,
                             cargando = false,
                             mensaje = if (docente == null) {
                                 "Perfil no disponible."
@@ -88,6 +92,46 @@ class PerfilDocenteViewModel(
                         cargando = false,
                         mensaje = "No se pudo cargar el perfil."
                     )
+                }
+            }
+        }
+    }
+
+    fun restaurarPaleta() {
+        val docenteId = _uiState.value.docente?.id ?: return
+        if (_uiState.value.guardando) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                preferenciasDocente.restaurarPaleta(docenteId)
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "Apariencia original restaurada.") }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "No se pudo restaurar la apariencia.") }
+                }
+            }
+        }
+    }
+
+    fun cambiarPaleta(paleta: PaletaEstudiante) {
+        val docenteId = _uiState.value.docente?.id ?: return
+        if (_uiState.value.guardando) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                preferenciasDocente.guardarPaleta(docenteId, paleta)
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "Colores guardados para tu cuenta.") }
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (docenteActual == docenteId) {
+                    _uiState.update { it.copy(guardando = false, mensaje = "No se pudieron guardar los colores.") }
                 }
             }
         }

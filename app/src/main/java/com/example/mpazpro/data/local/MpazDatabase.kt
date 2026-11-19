@@ -13,9 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CursoEntity::class,
         EstudianteEntity::class,
         ActividadEntity::class,
-        IntentoActividadEntity::class
+        IntentoActividadEntity::class,
+        MensajeDocenteEntity::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -29,6 +30,8 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun actividadDao(): ActividadDao
 
     abstract fun intentoActividadDao(): IntentoActividadDao
+
+    abstract fun mensajeDocenteDao(): MensajeDocenteDao
 
     companion object {
 
@@ -202,6 +205,35 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN rut TEXT")
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN pinHash TEXT")
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN pinSalt TEXT")
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN pinIteraciones INTEGER")
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN intentosFallidos INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN bloqueadoHasta INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_estudiantes_rut ON estudiantes(rut)")
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS mensajes_docente (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    estudianteId INTEGER NOT NULL, docenteId INTEGER NOT NULL,
+                    actividadId INTEGER, contenido TEXT NOT NULL, creadaEn INTEGER NOT NULL,
+                    leido INTEGER NOT NULL DEFAULT 0,
+                    FOREIGN KEY(estudianteId) REFERENCES estudiantes(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(docenteId) REFERENCES docentes(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(actividadId) REFERENCES actividades(id) ON UPDATE NO ACTION ON DELETE SET NULL
+                )""")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_mensajes_docente_estudianteId ON mensajes_docente(estudianteId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_mensajes_docente_docenteId ON mensajes_docente(docenteId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_mensajes_docente_actividadId ON mensajes_docente(actividadId)")
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -217,6 +249,8 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_7_8,
+                        MIGRATION_8_9,
+                        MIGRATION_9_10,
                     )
                     .build()
                     .also { instancia = it }

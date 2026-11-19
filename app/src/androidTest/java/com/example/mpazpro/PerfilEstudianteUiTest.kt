@@ -36,6 +36,7 @@ class PerfilEstudianteUiTest {
             PerfilEstudianteScreen(
                 estado = estado.value, onVolver = {}, onContinuar = { continuaciones++ },
                 onOscuro = { estado.value = estado.value.copy(preferencias = estado.value.preferencias.copy(modoOscuro = it)) },
+                onPaleta = { estado.value = estado.value.copy(preferencias = estado.value.preferencias.copy(paleta = it)) },
                 onTextoGrande = { estado.value = estado.value.copy(preferencias = estado.value.preferencias.copy(textoGrande = it)) },
                 onObjetivo = { estado.value = estado.value.copy(preferencias = estado.value.preferencias.copy(objetivo = it)) },
                 onFoto = {}, onErrorFoto = {}
@@ -44,6 +45,11 @@ class PerfilEstudianteUiTest {
         compose.onNodeWithText("Sofía").assertIsDisplayed()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("30% de mi aventura completada"))
         compose.onNodeWithText("30% de mi aventura completada").assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Océano"))
+        compose.onNodeWithText("Océano").performClick()
+        compose.runOnIdle {
+            assertEquals(com.example.mpazpro.data.repository.PaletaEstudiante.OCEANO, estado.value.preferencias.paleta)
+        }
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasContentDescription("Modo oscuro"))
         compose.onNodeWithContentDescription("Modo oscuro").performScrollTo().performClick()
         compose.onNodeWithContentDescription("Modo oscuro").assertIsOn()

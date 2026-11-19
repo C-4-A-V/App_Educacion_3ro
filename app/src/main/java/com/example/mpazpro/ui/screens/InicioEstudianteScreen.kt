@@ -6,6 +6,8 @@ import androidx.compose.foundation.shape.CircleShape
 import com.example.mpazpro.ui.components.FondoAventura
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -31,12 +33,52 @@ fun InicioEstudianteScreen(
     paraContinuar: ActividadParaContinuar? = null,
     onContinuar: (ActividadParaContinuar) -> Unit = {},
     onAbrirPerfil: () -> Unit = {},
-    onAprendeConPudu: () -> Unit = {}
+    onAprendeConPudu: () -> Unit = {},
+    mensajesDocente: List<MensajeEstudiante> = emptyList(),
+    onLeerMensaje: (Long) -> Unit = {}
 ) {
     BackHandler(onBack = onSalir)
     val columnas = columnasPara(claseAnchoVentana())
     val avance by animateFloatAsState(progreso.porcentaje, label = "Progreso de la aventura")
+    var verMensajes by remember(estudiante.id) { mutableStateOf(false) }
+    var mensajeSeleccionado by remember(estudiante.id) { mutableStateOf<MensajeEstudiante?>(null) }
+    val nuevos = mensajesDocente.count { !it.leido }
     AventuraTheme {
+        if (verMensajes) {
+            AlertDialog(
+                onDismissRequest = { verMensajes = false; mensajeSeleccionado = null },
+                title = { Text(if (mensajeSeleccionado == null) "💌 Mensajes de mi docente" else "Un mensaje para ti") },
+                text = {
+                    Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val seleccionado = mensajeSeleccionado
+                        if (seleccionado == null) {
+                            if (mensajesDocente.isEmpty()) Text("Todavía no tienes mensajes.")
+                            mensajesDocente.forEach { mensaje ->
+                                OutlinedCard(onClick = {
+                                    mensajeSeleccionado = mensaje
+                                    if (!mensaje.leido) onLeerMensaje(mensaje.id)
+                                }, modifier = Modifier.fillMaxWidth()) {
+                                    Column(Modifier.padding(14.dp)) {
+                                        Text(if (mensaje.leido) "Mensaje de ${mensaje.docenteNombre}" else "✨ Nuevo mensaje de ${mensaje.docenteNombre}")
+                                        mensaje.actividadTitulo?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                                    }
+                                }
+                            }
+                        } else {
+                            Text("De: ${seleccionado.docenteNombre}", style = MaterialTheme.typography.titleSmall)
+                            seleccionado.actividadTitulo?.let { Text("Actividad: $it", style = MaterialTheme.typography.bodyMedium) }
+                            Text(seleccionado.contenido, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (mensajeSeleccionado != null) mensajeSeleccionado = null else verMensajes = false
+                    }) { Text(if (mensajeSeleccionado != null) "Volver a mis mensajes" else "Cerrar") }
+                }
+            )
+        }
         FondoAventura(modifier.fillMaxSize()) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(columnas),
@@ -77,6 +119,7 @@ fun InicioEstudianteScreen(
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Card(
+                        onClick = { if (mensajesDocente.isNotEmpty()) verMensajes = true },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
                         shape = RoundedCornerShape(28.dp)
@@ -84,8 +127,18 @@ fun InicioEstudianteScreen(
                         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             PuduExplorador(Modifier.size(76.dp))
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text("¿Qué descubriremos hoy?", style = MaterialTheme.typography.titleMedium)
-                                Text("¡Vamos a aprender con tu pudú explorador!", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    when {
+                                        nuevos == 1 -> "¡Oye, ${estudiante.nombre}! Tu docente te envió un mensaje."
+                                        nuevos > 1 -> "¡Oye, ${estudiante.nombre}! Tienes $nuevos mensajes nuevos."
+                                        else -> "¿Qué descubriremos hoy?"
+                                    }, style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    if (mensajesDocente.isNotEmpty()) "💌 Toca aquí para ver tus mensajes"
+                                    else "¡Vamos a aprender con tu pudú explorador!",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             }
                         }
                     }

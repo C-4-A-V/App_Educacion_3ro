@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.example.mpazpro.ui.theme.*
+import com.example.mpazpro.data.repository.PaletaEstudiante
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -70,6 +71,55 @@ class ContrasteTemasTest {
             oscuro.value = true
         }
         compose.runOnIdle { comprobar(pares) }
+    }
+
+    @Test fun paletasEstudianteMantienenContrasteEnModoClaroYOscuro() {
+        val oscuro = mutableStateOf(false)
+        val paleta = mutableStateOf(PaletaEstudiante.AVENTURA)
+        var pares = emptyList<Triple<String, Color, Color>>()
+        compose.setContent {
+            CompositionLocalProvider(
+                LocalModoOscuroEstudiante provides oscuro.value,
+                LocalPaletaEstudiante provides paleta.value
+            ) {
+                AventuraTheme {
+                    val actuales = paresTema() + (0..3).map {
+                        val (fondo, texto) = colorTarjetaAventura(it)
+                        Triple("Tarjeta de asignatura $it", texto, fondo)
+                    }
+                    SideEffect { pares = actuales }
+                }
+            }
+        }
+        for (opcion in PaletaEstudiante.entries) {
+            for (modo in listOf(false, true)) {
+                compose.runOnIdle { paleta.value = opcion; oscuro.value = modo }
+                compose.runOnIdle { comprobar(pares) }
+            }
+        }
+    }
+
+    @Test fun paletasDocenteMantienenContrasteEnAmbosModos() {
+        val oscuro = mutableStateOf(false)
+        val paleta = mutableStateOf(PaletaEstudiante.AVENTURA)
+        var pares = emptyList<Triple<String, Color, Color>>()
+        compose.setContent {
+            CompositionLocalProvider(
+                LocalModoOscuroDocente provides oscuro.value,
+                LocalPaletaDocente provides paleta.value
+            ) {
+                DocenteTheme {
+                    val actuales = paresTema()
+                    SideEffect { pares = actuales }
+                }
+            }
+        }
+        for (opcion in PaletaEstudiante.entries) {
+            for (modo in listOf(false, true)) {
+                compose.runOnIdle { paleta.value = opcion; oscuro.value = modo }
+                compose.runOnIdle { comprobar(pares) }
+            }
+        }
     }
 
     @Test fun docenteActualizaTextoEnAmbasApariencias() {

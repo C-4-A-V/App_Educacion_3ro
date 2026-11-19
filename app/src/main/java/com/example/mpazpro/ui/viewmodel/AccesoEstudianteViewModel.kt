@@ -76,13 +76,33 @@ class AccesoEstudianteViewModel(
         }
     }
 
-    fun seleccionar(estudianteId: Long) {
+    fun ingresar(rut: String, pin: String, alIngresar: () -> Unit) {
+        if (_uiState.value.ingresando) return
+        _uiState.update { it.copy(ingresando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                val id = repository.autenticar(rut, pin)
+                if (id == null) {
+                    _uiState.update { it.copy(ingresando = false, mensaje = "Revisa tu RUT y PIN. Si no recuerdas tu PIN, pide ayuda a tu docente. Después de varios intentos, espera un minuto.") }
+                } else {
+                    seleccionar(id)
+                    _uiState.update { it.copy(ingresando = false) }
+                    alIngresar()
+                }
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                _uiState.update { it.copy(ingresando = false, mensaje = "No pudimos ingresar. Inténtalo nuevamente.") }
+            }
+        }
+    }
+
+    private fun seleccionar(estudianteId: Long) {
         val perfil = _uiState.value.perfiles.find {
             it.id == estudianteId
         } ?: return
 
         savedState["estudianteId"] = estudianteId
-        _uiState.update { it.copy(seleccionado = perfil, progreso = ProgresoEstudiante(), paraContinuar = null, mensaje = null,
+        _uiState.update { it.copy(seleccionado = perfil, progreso = ProgresoEstudiante(), paraContinuar = null, mensajesDocente = emptyList(), mensaje = null,
             preferencias = PreferenciasPerfilEstudiante(), preferenciasCargadas = false,
             guardandoPerfil = false, mensajePerfil = null) }
 
@@ -92,10 +112,15 @@ class AccesoEstudianteViewModel(
                 combine(
                     repository.observarProgreso(estudianteId),
                     database.actividadDao().observarParaContinuar(estudianteId),
-                    preferencias.observar(estudianteId)
-                ) { progreso, pendiente, ajustes -> Triple(progreso, pendiente, ajustes) }.collect { (progreso, pendiente, ajustes) ->
-                    _uiState.update { it.copy(progreso = progreso, paraContinuar = pendiente,
-                        preferencias = ajustes, preferenciasCargadas = true) }
+                    preferencias.observar(estudianteId),
+                    database.mensajeDocenteDao().observar(estudianteId)
+                ) { progreso, pendiente, ajustes, mensajes ->
+                    { estado: AccesoEstudianteUiState ->
+                        estado.copy(progreso = progreso, paraContinuar = pendiente,
+                            preferencias = ajustes, preferenciasCargadas = true, mensajesDocente = mensajes)
+                    }
+                }.collect { actualizar ->
+                    _uiState.update(actualizar)
                 }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
@@ -125,6 +150,8 @@ class AccesoEstudianteViewModel(
         }
     }
 
+    fun cambiarPaleta(valor: com.example.mpazpro.data.repository.PaletaEstudiante) =
+        guardarPerfil { preferencias.guardarPaleta(it, valor) }
     fun cambiarOscuro(valor: Boolean) = guardarPerfil { preferencias.guardarOscuro(it, valor) }
     fun cambiarTextoGrande(valor: Boolean) = guardarPerfil { preferencias.guardarTextoGrande(it, valor) }
     fun cambiarObjetivo(valor: String) = guardarPerfil { preferencias.guardarObjetivo(it, valor) }
@@ -132,6 +159,18 @@ class AccesoEstudianteViewModel(
     fun guardarFotoPerfil(uri: Uri) = guardarPerfil { id ->
         val ruta = fotos.importar(uri)
         check(database.estudianteDao().actualizarFotoPerfil(id, ruta) == 1)
+    }
+
+    fun marcarMensajeLeido(id: Long) {
+        val estudianteId = _uiState.value.seleccionado?.id ?: return
+        viewModelScope.launch {
+            try {
+                database.mensajeDocenteDao().marcarLeido(id, estudianteId)
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                _uiState.update { it.copy(mensaje = "No se pudo guardar la lectura del mensaje.") }
+            }
+        }
     }
 
     fun mostrarErrorPerfil(mensaje: String) {
@@ -142,7 +181,7 @@ class AccesoEstudianteViewModel(
         savedState.remove<Long>("estudianteId")
         progresoJob?.cancel()
         progresoJob = null
-        _uiState.update { it.copy(seleccionado = null, progreso = ProgresoEstudiante(), paraContinuar = null,
+        _uiState.update { it.copy(seleccionado = null, progreso = ProgresoEstudiante(), paraContinuar = null, mensajesDocente = emptyList(),
             preferencias = PreferenciasPerfilEstudiante(), preferenciasCargadas = false,
             guardandoPerfil = false, mensajePerfil = null) }
     }

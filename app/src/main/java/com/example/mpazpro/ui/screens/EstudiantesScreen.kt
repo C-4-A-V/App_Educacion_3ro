@@ -12,6 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import com.example.mpazpro.R
 import androidx.compose.ui.Modifier
 import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.res.painterResource
@@ -33,6 +41,22 @@ fun EstudiantesScreen(
 ) {
     DocenteTheme {
     val estado by estudiantesViewModel.uiState.collectAsStateWithLifecycle()
+
+    if (estado.editandoAccesoId != null) {
+        AlertDialog(
+            onDismissRequest = { if (!estado.guardando) estudiantesViewModel.cancelarAcceso() },
+            title = { Text("Configurar acceso") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Ingresa el RUT y un PIN nuevo de 4 números para este estudiante.")
+                    CamposAccesoEstudiante(estado.rut, estado.pin, estado.errorAcceso,
+                        estudiantesViewModel::actualizarRut, estudiantesViewModel::actualizarPin, !estado.guardando)
+                }
+            },
+            confirmButton = { TextButton(onClick = estudiantesViewModel::guardarAcceso, enabled = !estado.guardando) { Text("Guardar") } },
+            dismissButton = { TextButton(onClick = estudiantesViewModel::cancelarAcceso, enabled = !estado.guardando) { Text("Cancelar") } }
+        )
+    }
 
     LaunchedEffect(cursoId, docenteId) {
         estudiantesViewModel.cargar(cursoId, docenteId)
@@ -187,6 +211,12 @@ fun EstudiantesScreen(
             }
 
             item {
+                CamposAccesoEstudiante(estado.rut, estado.pin, estado.errorAcceso,
+                    estudiantesViewModel::actualizarRut, estudiantesViewModel::actualizarPin,
+                    !estado.guardando && !estado.importandoFoto)
+            }
+
+            item {
                 Button(
                     onClick = estudiantesViewModel::registrar,
                     enabled = !estado.guardando && !estado.importandoFoto,
@@ -236,11 +266,14 @@ fun EstudiantesScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "ID: E-${estudiante.id}",
+                                text = if (estudiante.rut == null) "Acceso pendiente de configurar" else "Acceso configurado",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                    TextButton(onClick = { estudiantesViewModel.editarAcceso(estudiante.id) }) {
+                        Text(if (estudiante.rut == null) "Configurar RUT y PIN" else "Cambiar RUT o PIN")
                     }
                 }
             }
@@ -248,3 +281,25 @@ fun EstudiantesScreen(
     }
     }
 }
+
+@Composable
+private fun CamposAccesoEstudiante(
+    rut: String, pin: String, error: String?,
+    onRut: (String) -> Unit, onPin: (String) -> Unit, habilitado: Boolean
+) {
+    var visible by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(value = rut, onValueChange = onRut, label = { Text("RUT del estudiante") },
+            singleLine = true, enabled = habilitado, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+            modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = pin, onValueChange = onPin, label = { Text("PIN de 4 números") },
+            singleLine = true, enabled = habilitado,
+            visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            trailingIcon = { IconButton(onClick = { visible = !visible }) {
+                Icon(painterResource(R.drawable.ic_visibility), if (visible) "Ocultar PIN" else "Mostrar PIN")
+            } }, modifier = Modifier.fillMaxWidth())
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    }
+}
+

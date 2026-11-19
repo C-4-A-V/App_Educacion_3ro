@@ -89,7 +89,12 @@ fun AppNavigation(
     )
     CompositionLocalProvider(
         LocalModoOscuroDocente provides modoOscuroDocente,
+        com.example.mpazpro.ui.theme.LocalPaletaDocente provides estadoPerfil.takeIf {
+            it.docente?.id == estadoLogin.docente?.id && estadoLogin.docente != null
+        }?.paleta,
         LocalModoOscuroEstudiante provides if (areaEstudiante) estadoEstudiante.preferencias.modoOscuro else null,
+        com.example.mpazpro.ui.theme.LocalPaletaEstudiante provides if (areaEstudiante)
+            estadoEstudiante.preferencias.paleta else com.example.mpazpro.data.repository.PaletaEstudiante.AVENTURA,
         LocalDensity provides if (areaEstudiante) densidadEstudiante else densidadActual
     ) {
     NavHost(
@@ -595,11 +600,7 @@ fun AppNavigation(
         composable(Screen.SeleccionEstudiante.route) {
             SeleccionEstudianteScreen(
                 accesoViewModel = accesoEstudianteViewModel,
-                onSeleccionar = { estudianteId ->
-                    accesoEstudianteViewModel.seleccionar(
-                        estudianteId
-                    )
-
+                onIngresar = {
                     navController.navigate(
                         Screen.InicioEstudiante.route
                     ) {
@@ -634,6 +635,7 @@ fun AppNavigation(
                             }
                         }
                     },
+                    onPaleta = accesoEstudianteViewModel::cambiarPaleta,
                     onOscuro = accesoEstudianteViewModel::cambiarOscuro,
                     onTextoGrande = accesoEstudianteViewModel::cambiarTextoGrande,
                     onObjetivo = accesoEstudianteViewModel::cambiarObjetivo,
@@ -653,6 +655,8 @@ fun AppNavigation(
                     progreso = estadoEstudiante.progreso,
                     mensaje = estadoEstudiante.mensaje,
                     paraContinuar = estadoEstudiante.paraContinuar,
+                    mensajesDocente = estadoEstudiante.mensajesDocente,
+                    onLeerMensaje = accesoEstudianteViewModel::marcarMensajeLeido,
                     onAbrirPerfil = {
                         navController.navigate(Screen.PerfilEstudiante.route) { launchSingleTop = true }
                     },

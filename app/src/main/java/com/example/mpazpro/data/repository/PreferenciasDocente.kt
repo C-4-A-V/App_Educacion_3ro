@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -24,6 +25,24 @@ class PreferenciasDocente internal constructor(private val store: DataStore<Pref
     fun modoOscuro(docenteId: Long): Flow<Boolean?> {
         val clave = clave(docenteId)
         return store.data.map { it[clave] }.distinctUntilChanged()
+    }
+
+    fun paleta(docenteId: Long): Flow<PaletaEstudiante?> {
+        require(docenteId > 0)
+        val clave = stringPreferencesKey("paleta_docente_$docenteId")
+        return store.data.map { datos ->
+            PaletaEstudiante.entries.firstOrNull { it.name == datos[clave] }
+        }.distinctUntilChanged()
+    }
+
+    suspend fun restaurarPaleta(docenteId: Long) {
+        require(docenteId > 0)
+        store.edit { it.remove(stringPreferencesKey("paleta_docente_$docenteId")) }
+    }
+
+    suspend fun guardarPaleta(docenteId: Long, valor: PaletaEstudiante) {
+        require(docenteId > 0)
+        store.edit { it[stringPreferencesKey("paleta_docente_$docenteId")] = valor.name }
     }
 
     suspend fun guardarModoOscuro(docenteId: Long, activado: Boolean) {

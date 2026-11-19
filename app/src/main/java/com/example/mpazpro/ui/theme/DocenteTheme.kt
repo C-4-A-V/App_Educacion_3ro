@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.mpazpro.data.repository.PaletaEstudiante
 
 private val DocenteClaro = lightColorScheme(
     surfaceTint = Color.Transparent,
@@ -51,12 +52,17 @@ private val DocenteOscuro = darkColorScheme(
 )
 
 val LocalModoOscuroDocente = staticCompositionLocalOf<Boolean?> { null }
+val LocalPaletaDocente = staticCompositionLocalOf<PaletaEstudiante?> { null }
 
 /** Identidad exclusiva del área docente; conserva la tipografía y lectura cómoda de la app. */
 @Composable
 fun DocenteTheme(content: @Composable () -> Unit) {
+    val oscuro = LocalModoOscuroDocente.current ?: isSystemInDarkTheme()
+    val paleta = LocalPaletaDocente.current
+    val colores = paleta?.let { coloresPaleta(it, oscuro).copy(surfaceTint = Color.Transparent) }
+        ?: if (oscuro) DocenteOscuro else DocenteClaro
     MaterialTheme(
-        colorScheme = if (LocalModoOscuroDocente.current ?: isSystemInDarkTheme()) DocenteOscuro else DocenteClaro,
+        colorScheme = colores,
         typography = MaterialTheme.typography,
         shapes = Shapes(
             extraSmall = RoundedCornerShape(8.dp),

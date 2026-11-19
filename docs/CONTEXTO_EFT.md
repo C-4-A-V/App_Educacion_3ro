@@ -24,17 +24,17 @@ El alcance final, en particular las operaciones CRUD y las relaciones entre cuen
 
 La app utiliza Kotlin, Jetpack Compose, navegación, ViewModels, repositorios, Room y DataStore. Ya existen actividades, perfiles, respuestas, progreso y pruebas. Según la documentación actual, los datos se almacenan localmente; no existe sincronización entre dispositivos.
 
-Las conexiones externas, el backend Spring Boot, la cobertura exigida y la firma release requieren implementación y verificación específica. No se consideran completados por figurar en este documento.
+La app ya consulta una API externa en «Aprende con Pudú». El backend Spring Boot, la cobertura exigida y la firma release requieren implementación y verificación específica; no se consideran completados por figurar en este documento.
 
 ## Alcance propuesto para la Experiencia 3
 
-1. **API externa:** incorporar información pertinente al contenido educativo mediante Retrofit, con estados visibles de carga y error. La API y su flujo aún no están elegidos.
+1. **API externa implementada:** «Aprende con Pudú» consulta mediante Retrofit la API del Banco Mundial (`GET https://api.worldbank.org/v2/country/CHL?format=json`) para obtener la capital de Chile. Presenta un estado de carga y, si falla la consulta, muestra una curiosidad local e informa que usa un dato guardado. El resto de las curiosidades proviene del catálogo local con sus respectivas fuentes.
 2. **Microservicios propios:** diseñar los servicios Spring Boot y su base de datos en función de los datos y operaciones que el proyecto necesite. Definir contratos, seguridad y flujo CRUD antes de implementarlos.
 3. **Integración móvil:** conectar las pantallas pertinentes con los servicios. Definir qué datos siguen en Room, cómo se sincronizan y cómo manejar desconexiones y conflictos sin perder avances.
 4. **Pruebas:** mantener las pruebas existentes, añadir pruebas de repositorios y ViewModels y generar un reporte que permita verificar el requisito de al menos 80 % del código lógico.
 5. **Entrega:** generar y probar un APK release firmado; documentar instalación, configuración, endpoints, pruebas y evidencias reales de colaboración.
 
-La sincronización de datos y el significado de «tiempo real» en la pauta se confirmarán con el docente. El alcance de la API externa y el número y responsabilidades de los microservicios siguen pendientes de decisión.
+La sincronización de datos y el significado de «tiempo real» en la pauta se confirmarán con el docente. La API externa ya elegida debe demostrarse en la entrega; el número y las responsabilidades de los microservicios siguen pendientes de decisión.
 
 ## Criterios de aceptación del contexto
 

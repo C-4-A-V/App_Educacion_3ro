@@ -11,6 +11,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ActividadDao {
 
+    @Query("""
+        SELECT a.* FROM actividades a JOIN cursos c ON c.id = a.cursoId
+        WHERE c.docenteId = :docenteId
+        ORDER BY a.asignaturaId, a.creadaEn DESC, a.id DESC
+    """)
+    fun observarTodasDocente(docenteId: Long): Flow<List<ActividadEntity>>
+
     @Query("SELECT id FROM actividades WHERE cursoId = :cursoId AND asignaturaId = :asignaturaId AND titulo = :titulo LIMIT 1")
     suspend fun buscarPredeterminada(cursoId: Long, asignaturaId: String, titulo: String): Long?
 

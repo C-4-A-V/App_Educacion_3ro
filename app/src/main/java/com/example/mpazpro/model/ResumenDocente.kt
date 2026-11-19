@@ -31,6 +31,8 @@ data class ResumenAlumno(
 data class ResumenDocenteUiState(
     val cursos: List<CursoEntity> = emptyList(),
     val alumnos: List<ResumenAlumno> = emptyList(),
+    val resultados: List<ResultadoPreguntaDocente> = emptyList(),
+    val actividades: List<com.example.mpazpro.data.local.ActividadEntity> = emptyList(),
     val cargando: Boolean = true,
     val error: String? = null
 )
