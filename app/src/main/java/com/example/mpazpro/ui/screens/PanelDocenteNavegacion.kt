@@ -8,12 +8,35 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.dp
+import com.example.mpazpro.R
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpazpro.model.DocenteSesion
 import com.example.mpazpro.ui.utils.claseAnchoVentana
 import com.example.mpazpro.ui.viewmodel.CursosViewModel
+
+@Composable
+internal fun BotonActualizarCursos(cargando: Boolean, actualizando: Boolean, onActualizar: () -> Unit) {
+    IconButton(
+        onClick = onActualizar,
+        enabled = !cargando && !actualizando,
+        modifier = Modifier.semantics {
+            contentDescription = if (actualizando) "Actualizando cursos" else "Actualizar cursos"
+        }
+    ) {
+        if (actualizando) {
+            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(painterResource(R.drawable.ic_actualizar), contentDescription = null)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,11 +47,21 @@ fun PanelDocenteScreen(
     onAbrirActividades: (Long, String) -> Unit,
     onAbrirPerfil: () -> Unit,
     onAbrirResultados: () -> Unit,
+    onAbrirServidor: (() -> Unit)? = null,
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel()
 ) {
     DocenteTheme {
+    val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
+    estado.avisoActualizacion?.let { aviso ->
+        AlertDialog(
+            onDismissRequest = cursosViewModel::cerrarAvisoActualizacion,
+            title = { Text("Estado de actualización") },
+            text = { Text(aviso) },
+            confirmButton = { TextButton(onClick = cursosViewModel::cerrarAvisoActualizacion) { Text("Entendido") } }
+        )
+    }
     val compacto = claseAnchoVentana() == WindowWidthSizeClass.Compact
     NavigationSuiteScaffold(
         modifier = modifier,
@@ -52,13 +85,24 @@ fun PanelDocenteScreen(
         }
     ) {
         Scaffold(
-            topBar = { TopAppBar(title = { Text("Espacio docente") }) },
+            topBar = {
+                TopAppBar(
+                    title = { Text("Espacio docente") },
+                    navigationIcon = {
+                        BotonActualizarCursos(
+                            cargando = estado.cargando,
+                            actualizando = estado.actualizandoManual,
+                            onActualizar = cursosViewModel::actualizarDesdePanel
+                        )
+                    }
+                )
+            },
             contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) { padding ->
             PanelDocenteContenido(
                 docente, onCerrarSesion, onAbrirCurso, onAbrirActividades,
                 onAbrirPerfil, onAbrirResultados, fotoRuta,
-                Modifier.padding(padding), cursosViewModel
+                Modifier.padding(padding), cursosViewModel, onAbrirServidor
             )
         }
     }

@@ -22,8 +22,37 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpazpro.ui.theme.EncabezadoDocente
 import com.example.mpazpro.ui.components.anchoFormulario
 import com.example.mpazpro.model.DocenteSesion
+import com.example.mpazpro.model.ConexionCurso
+import com.example.mpazpro.data.local.CursoEntity
+import com.example.mpazpro.data.repository.PropuestaVinculacionCursos
 import com.example.mpazpro.ui.components.ImagenInteligente
 import com.example.mpazpro.ui.viewmodel.CursosViewModel
+
+@Composable
+internal fun CursoEnLista(
+    curso: CursoEntity,
+    conexion: ConexionCurso?,
+    habilitado: Boolean,
+    onAbrir: () -> Unit
+) {
+    OutlinedButton(onClick = onAbrir, enabled = habilitado,
+        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(PropuestaVinculacionCursos.nombreVisible(curso.nombre))
+            conexion?.let {
+                Text(
+                    when (it) {
+                        ConexionCurso.CONECTANDO -> "Conectando…"
+                        ConexionCurso.CONECTADO -> "Conectado"
+                        ConexionCurso.SIN_CONEXION -> "Sin conexión · intentaremos nuevamente"
+                        ConexionCurso.REVISAR -> "Necesita revisión"
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,19 +65,37 @@ internal fun PanelDocenteContenido(
     onAbrirResultados: () -> Unit,
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
-    cursosViewModel: CursosViewModel = viewModel()
+    cursosViewModel: CursosViewModel = viewModel(),
+    onAbrirServidor: (() -> Unit)? = null
 ) {
     val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
     val densidad = LocalDensity.current
     val anchoVentana = with(densidad) { LocalWindowInfo.current.containerSize.width.toDp() }
     val columnasMenu = if (anchoVentana < 460.dp || densidad.fontScale > 1.25f) 1 else 2
 
+    var confirmarSeccion by rememberSaveable(docente.id) { mutableStateOf<Char?>(null) }
+    confirmarSeccion?.let { seccion ->
+        AlertDialog(
+            onDismissRequest = { if (!estado.guardando) confirmarSeccion = null },
+            title = { Text("¿Crear nuevo curso?") },
+            text = { Text("Se creará 3.º Básico $seccion y se conectará automáticamente cuando el servidor esté disponible.") },
+            confirmButton = {
+                TextButton(onClick = { confirmarSeccion = null; cursosViewModel.crearCurso(seccion) },
+                    enabled = !estado.guardando) { Text("Crear curso") }
+            },
+            dismissButton = { TextButton(onClick = { confirmarSeccion = null }, enabled = !estado.guardando) { Text("Cancelar") } }
+        )
+    }
     var accion by rememberSaveable(docente.id) {
         mutableStateOf<String?>(null)
     }
 
     LaunchedEffect(docente.id) {
         cursosViewModel.cargarCursos(docente.id)
+    }
+    ActualizacionAutomatica(docente.id) { cursosViewModel.actualizarAutomaticamente() }
+    LaunchedEffect(accion) {
+        if (accion != null) cursosViewModel.revisarConexiones()
     }
 
     // Selección y creación de cursos.
@@ -87,31 +134,17 @@ internal fun PanelDocenteContenido(
                         items = estado.cursos,
                         key = { it.id }
                     ) { curso ->
-                        OutlinedButton(
-                            onClick = {
+                        CursoEnLista(
+                            curso = curso,
+                            conexion = if (onAbrirServidor != null) estado.conexiones[curso.id] ?: ConexionCurso.CONECTANDO else null,
+                            habilitado = !estado.guardando,
+                            onAbrir = {
                                 val elegida = accion
-                                    ?: return@OutlinedButton
-
                                 accion = null
-
-                                if (elegida == "actividades") {
-                                    onAbrirActividades(
-                                        curso.id,
-                                        "actividades"
-                                    )
-                                } else {
-                                    onAbrirCurso(curso.id)
-                                }
-                            },
-
-                            enabled = !estado.guardando,
-
-                            modifier = Modifier.fillMaxWidth(),
-
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(curso.nombre)
-                        }
+                                if (elegida == "actividades") onAbrirActividades(curso.id, "actividades")
+                                else onAbrirCurso(curso.id)
+                            }
+                        )
                     }
 
                     if (
@@ -125,62 +158,33 @@ internal fun PanelDocenteContenido(
                         }
                     }
 
-                    item {
-                        Text(
-                            text = "Crear un curso",
-                            style = MaterialTheme.typography.titleSmall
-                        )
-
-                        OutlinedTextField(
-                            value = estado.nombre,
-
-                            onValueChange =
-                                cursosViewModel::actualizarNombre,
-
-                            label = {
-                                Text("Nombre del curso")
-                            },
-
-                            placeholder = {
-                                Text("Ejemplo: 3.º A")
-                            },
-
-                            singleLine = true,
-
-                            enabled = !estado.guardando,
-
-                            isError = estado.errorNombre != null,
-                            trailingIcon = {
-                                if (estado.errorNombre != null) Icon(painterResource(android.R.drawable.ic_dialog_alert), "Error en el nombre del curso")
-                            },
-
-                            supportingText = {
-                                estado.errorNombre?.let {
-                                    Text(it)
+                    if (onAbrirServidor != null && (estado.requiereRevisionGlobal || estado.conexiones.values.any {
+                            it == ConexionCurso.SIN_CONEXION || it == ConexionCurso.REVISAR
+                        })) {
+                        item {
+                            if (estado.requiereRevisionGlobal || estado.conexiones.values.any { it == ConexionCurso.REVISAR }) {
+                                Text("Hay cursos que necesitan revisión de sus nombres o conexiones.",
+                                    style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = { accion = null; onAbrirServidor() }, enabled = !estado.guardando) {
+                                    Text("Revisar conexión")
                                 }
-                            },
-
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            }
+                            TextButton(onClick = cursosViewModel::revisarConexiones, enabled = !estado.guardando) {
+                                Text("Reintentar conexión")
+                            }
+                        }
                     }
 
                     item {
+                        val siguiente = PropuestaVinculacionCursos.siguiente(estado.cursos.map { it.nombre })
                         Button(
-                            onClick = cursosViewModel::crearCurso,
-
-                            enabled =
-                                !estado.cargando &&
-                                !estado.guardando,
-
+                            onClick = { confirmarSeccion = siguiente },
+                            enabled = !estado.cargando && !estado.guardando && siguiente != null,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                if (estado.guardando) {
-                                    "Guardando…"
-                                } else {
-                                    "Crear curso"
-                                }
-                            )
+                        ) { Text(if (estado.guardando) "Guardando…" else "Crear nuevo curso") }
+                        if (!estado.cargando && siguiente == null) {
+                            Text("No se puede determinar el siguiente curso. Revisa los nombres y secciones existentes.",
+                                style = MaterialTheme.typography.bodySmall)
                         }
                     }
 

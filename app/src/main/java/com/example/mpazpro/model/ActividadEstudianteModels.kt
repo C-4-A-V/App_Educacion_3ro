@@ -1,6 +1,7 @@
 package com.example.mpazpro.model
 
 import com.example.mpazpro.data.local.IntentoActividadEntity
+import com.example.mpazpro.data.remote.ActividadRemotaEstudiante
 
 data class ActividadEstudianteResumen(
     val id: Long,
@@ -27,6 +28,9 @@ data class ActividadParaResolver(
 
 data class ActividadesEstudianteUiState(
     val actividades: List<ActividadEstudianteResumen> = emptyList(),
+    val actividadesCompartidas: List<ActividadRemotaEstudiante> = emptyList(),
+    val cargandoCompartidas: Boolean = false,
+    val errorCompartidas: Boolean = false,
     val progreso: ProgresoEstudiante = ProgresoEstudiante(),
     val cargando: Boolean = true,
     val mensaje: String? = null
@@ -37,6 +41,7 @@ data class ActividadParaContinuar(val id: Long, val asignaturaId: String, val ti
 data class ResolverActividadUiState(
     val actividad: ActividadParaResolver? = null,
     val respuestaSeleccionada: Int = -1,
+    val seleccionBloqueada: Boolean = false,
     val intento: IntentoActividadEntity? = null,
     val cargando: Boolean = true,
     val enviando: Boolean = false,

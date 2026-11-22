@@ -10,6 +10,8 @@ sealed class Screen(val route: String) {
 
     data object PanelDocente : Screen("panel_docente")
 
+    data object ActividadesServidor : Screen("actividades_servidor_prueba")
+
     data object PerfilDocente : Screen("perfil_docente")
 
     data object CursosResultados : Screen("resultados_cursos")
@@ -91,6 +93,11 @@ sealed class Screen(val route: String) {
         ): String {
             return "curso/$cursoId/asignatura/$asignaturaId/crear"
         }
+    }
+
+    data object ResolverActividadRemota :
+        Screen("actividad_remota/{actividadId}/resolver") {
+        fun crearRuta(actividadId: Long): String = "actividad_remota/$actividadId/resolver"
     }
 
     data object ResolverActividad :

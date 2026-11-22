@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.example.mpazpro.data.local.*
 import com.example.mpazpro.data.repository.EstudianteRepository
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -27,6 +28,35 @@ class AccesoEstudianteTest {
     }
 
     @After fun cerrar() { db.close() }
+
+    @Test fun retiraYRestituyeVariosSinPerderAccesoFotoNiAvance() = runBlocking {
+        val uno = repository.registrar(curso, docente, "Uno", "foto-uno", "12.345.678-5", "1234")
+        val dos = db.estudianteDao().insertar(EstudianteEntity(cursoId = curso, nombre = "Dos", fotoRuta = "foto-dos"))
+        val actividad = db.actividadDao().insertar(BancoActividades.entidades(curso).first())
+        db.intentoActividadDao().insertar(IntentoActividadEntity(estudianteId = uno, actividadId = actividad,
+            respuestaElegida = 1, respuestaCorrecta = 1, correcta = true))
+        try {
+            repository.retirarEstudiantes(listOf(uno, dos + 1000), curso, docente)
+            fail("Una selección inválida no debe retirar parcialmente")
+        } catch (_: IllegalStateException) {}
+        assertEquals(2, repository.observarEstudiantes(curso, docente).first().size)
+        repository.retirarEstudiantes(listOf(uno, dos), curso, docente)
+        assertTrue(repository.observarEstudiantes(curso, docente).first().isEmpty())
+        assertEquals(2, repository.observarRetirados(curso, docente).first().size)
+        assertTrue(repository.observarPerfiles().first().isEmpty())
+        assertNull(repository.autenticar("12345678-5", "1234"))
+        assertTrue(db.intentoActividadDao().buscar(uno, actividad)!!.correcta)
+        assertEquals("foto-uno", db.estudianteDao().buscarPorRut("123456785")!!.fotoRuta)
+        try {
+            repository.restaurarEstudiante(uno, curso, docente + 999)
+            fail("Otro docente no puede restaurar")
+        } catch (_: IllegalStateException) {}
+        repository.restaurarEstudiante(uno, curso, docente)
+        assertEquals(uno, repository.autenticar("12345678-5", "1234"))
+        assertEquals("foto-uno", db.estudianteDao().buscarPorRut("123456785")!!.fotoRuta)
+        assertTrue(db.intentoActividadDao().buscar(uno, actividad)!!.correcta)
+        assertEquals(1, repository.observarRetirados(curso, docente).first().size)
+    }
 
     @Test fun credencialesCorrectasYError() = runBlocking {
         val id = repository.registrar(curso, docente, "Estudiante", "foto", "12.345.678-5", "1234")

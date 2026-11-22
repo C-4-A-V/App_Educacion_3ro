@@ -1,5 +1,8 @@
 package com.example.mpazpro.navigation
 
+import android.content.pm.ApplicationInfo
+import androidx.compose.ui.platform.LocalContext
+import com.example.mpazpro.ui.screens.ActividadesServidorScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -32,6 +35,7 @@ import com.example.mpazpro.ui.screens.PanelDocenteScreen
 import com.example.mpazpro.ui.screens.PerfilDocenteScreen
 import com.example.mpazpro.ui.screens.RegistroDocenteScreen
 import com.example.mpazpro.ui.screens.ResolverActividadScreen
+import com.example.mpazpro.ui.screens.ResolverActividadRemotaScreen
 import com.example.mpazpro.ui.screens.ResumenDocenteScreen
 import com.example.mpazpro.ui.screens.ResultadosActividadScreen
 import com.example.mpazpro.ui.screens.SeleccionEstudianteScreen
@@ -45,6 +49,7 @@ fun AppNavigation(
     loginViewModel: LoginDocenteViewModel = viewModel()
 ) {
     val navController = rememberNavController()
+    val esDepuracion = (LocalContext.current.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     val estadoLogin by loginViewModel.uiState
         .collectAsStateWithLifecycle()
@@ -79,7 +84,7 @@ fun AppNavigation(
     val entradaActual by navController.currentBackStackEntryAsState()
     val areaEstudiante = entradaActual?.destination?.route in setOf(
         Screen.InicioEstudiante.route, Screen.PerfilEstudiante.route, Screen.AprendeConPudu.route,
-        Screen.Asignatura.route, Screen.ResolverActividad.route
+        Screen.Asignatura.route, Screen.ResolverActividad.route, Screen.ResolverActividadRemota.route
     ) && estadoEstudiante.seleccionado != null
     val densidadActual = LocalDensity.current
     val densidadBase = LocalDensidadOriginal.current ?: densidadActual
@@ -292,6 +297,15 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.ActividadesServidor.route) {
+            val docente = estadoLogin.docente
+            if (esDepuracion && docente != null) {
+                ActividadesServidorScreen(docenteId = docente.id, onVolver = { navController.popBackStack() })
+            } else {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+            }
+        }
+
         composable(Screen.PanelDocente.route) {
             val docente = estadoLogin.docente
 
@@ -301,6 +315,9 @@ fun AppNavigation(
                     fotoRuta = estadoPerfil.docente
                         ?.takeIf { it.id == docente.id }
                         ?.fotoRuta,
+                    onAbrirServidor = if (esDepuracion) ({
+                        navController.navigate(Screen.ActividadesServidor.route)
+                    }) else null,
                     onAbrirPerfil = {
                         navController.navigate(Screen.PerfilDocente.route) {
                             launchSingleTop = true
@@ -423,6 +440,7 @@ fun AppNavigation(
                 AsignaturasDocenteScreen(
                     cursoId = cursoId,
                     docenteId = docente.id,
+                    mostrarBanco = accion != "resultados",
                     onVolver = {
                         navController.popBackStack()
                     },
@@ -654,7 +672,7 @@ fun AppNavigation(
                     estudiante = estudiante,
                     progreso = estadoEstudiante.progreso,
                     mensaje = estadoEstudiante.mensaje,
-                    paraContinuar = estadoEstudiante.paraContinuar,
+                    paraContinuar = null,
                     mensajesDocente = estadoEstudiante.mensajesDocente,
                     onLeerMensaje = accesoEstudianteViewModel::marcarMensajeLeido,
                     onAbrirPerfil = {
@@ -764,8 +782,38 @@ fun AppNavigation(
                         ) {
                             launchSingleTop = true
                         }
+                    },
+                    onAbrirActividadRemota = { actividadId ->
+                        if (esDepuracion) {
+                            navController.navigate(Screen.ResolverActividadRemota.crearRuta(actividadId)) {
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 )
+            }
+        }
+
+        composable(
+            route = Screen.ResolverActividadRemota.route,
+            arguments = listOf(navArgument("actividadId") { type = NavType.LongType })
+        ) { entrada ->
+            val estudiante = estadoEstudiante.seleccionado
+            val actividadId = entrada.arguments?.getLong("actividadId") ?: -1L
+            if (esDepuracion && estudiante != null && actividadId > 0) {
+                ResolverActividadRemotaScreen(
+                    actividadId = actividadId,
+                    estudiante = estudiante,
+                    onVolver = { navController.popBackStack() },
+                    onSiguiente = { siguienteId ->
+                        navController.navigate(Screen.ResolverActividadRemota.crearRuta(siguienteId)) {
+                            popUpTo(entrada.destination.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            } else {
+                LaunchedEffect(Unit) { navController.popBackStack() }
             }
         }
 
@@ -776,38 +824,9 @@ fun AppNavigation(
                     type = NavType.LongType
                 }
             )
-        ) { entrada ->
-            val estudiante = estadoEstudiante.seleccionado
-
-            val actividadId = entrada.arguments
-                ?.getLong("actividadId") ?: -1L
-
-            if (estudiante == null) {
-                LaunchedEffect(Unit) {
-                    navController.navigate(
-                        Screen.Bienvenida.route
-                    ) {
-                        popUpTo(Screen.PanelDocente.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                }
-            } else {
-                ResolverActividadScreen(
-                    actividadId = actividadId,
-                    estudiante = estudiante,
-                    onVolver = {
-                        navController.popBackStack()
-                    },
-                    onSiguiente = { siguienteId ->
-                        navController.navigate(Screen.ResolverActividad.crearRuta(siguienteId)) {
-                            popUpTo(entrada.destination.id) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
+        ) {
+            // Los accesos antiguos a prácticas locales vuelven a la lista de actividades compartidas.
+            LaunchedEffect(Unit) { navController.popBackStack() }
         }
 
         composable(

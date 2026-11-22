@@ -1,10 +1,15 @@
 package com.example.mpazpro.ui.viewmodel
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.repository.ActividadEstudianteRepository
+import com.example.mpazpro.data.repository.AulaEstudianteRepository
+import com.example.mpazpro.data.repository.PreferenciasAulaEstudiante
+import com.example.mpazpro.data.remote.ServicioActividadesServidor
+import com.example.mpazpro.data.remote.ServicioAulaActividades
 import com.example.mpazpro.model.ActividadesEstudianteUiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -18,9 +23,13 @@ class ActividadesEstudianteViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository = ActividadEstudianteRepository(
-        MpazDatabase.obtenerInstancia(application)
+    private val database = MpazDatabase.obtenerInstancia(application)
+    private val repository = ActividadEstudianteRepository(database)
+    private val aula = AulaEstudianteRepository(
+        database, ServicioActividadesServidor.api, ServicioAulaActividades.api,
+        PreferenciasAulaEstudiante(application)
     )
+    private val esDepuracion = (application.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private val _uiState = MutableStateFlow(
         ActividadesEstudianteUiState()
@@ -30,6 +39,7 @@ class ActividadesEstudianteViewModel(
 
     private var contexto: Pair<Long, String>? = null
     private var observacionJob: Job? = null
+    private var consultaAulaJob: Job? = null
 
     fun cargar(
         estudianteId: Long,
@@ -40,25 +50,15 @@ class ActividadesEstudianteViewModel(
         if (contexto == nuevoContexto) return
 
         observacionJob?.cancel()
+        consultaAulaJob?.cancel()
         contexto = nuevoContexto
         _uiState.value = ActividadesEstudianteUiState()
+        if (esDepuracion) actualizarCompartidas()
 
         observacionJob = viewModelScope.launch {
             try {
-                launch {
-                    repository.observarActividades(
-                        estudianteId = estudianteId,
-                        asignaturaId = asignaturaId
-                    ).collect { lista ->
-                        _uiState.update {
-                            it.copy(
-                                actividades = lista,
-                                cargando = false,
-                                mensaje = null
-                            )
-                        }
-                    }
-                }
+                // Las actividades locales se conservan, pero solo se ofrecen las compartidas.
+                _uiState.update { it.copy(actividades = emptyList(), cargando = false, mensaje = null) }
 
                 launch {
                     repository.observarProgresoAsignatura(
@@ -78,6 +78,31 @@ class ActividadesEstudianteViewModel(
                         cargando = false,
                         mensaje = "No se pudieron cargar las actividades."
                     )
+                }
+            }
+        }
+    }
+
+    fun actualizarCompartidasAutomaticamente() {
+        if (consultaAulaJob?.isActive != true) actualizarCompartidas()
+    }
+
+    fun actualizarCompartidas() {
+        if (!esDepuracion) return
+        val consulta = contexto ?: return
+        consultaAulaJob?.cancel()
+        _uiState.update { it.copy(cargandoCompartidas = true, errorCompartidas = false) }
+        consultaAulaJob = viewModelScope.launch {
+            try {
+                val lista = aula.listar(consulta.first, consulta.second).orEmpty()
+                if (contexto == consulta) _uiState.update {
+                    it.copy(actividadesCompartidas = lista, cargandoCompartidas = false)
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (contexto == consulta) _uiState.update {
+                    it.copy(cargandoCompartidas = false, errorCompartidas = true)
                 }
             }
         }

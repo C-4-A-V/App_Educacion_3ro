@@ -28,6 +28,11 @@ class DatosDemostracionTest {
         val curso = a.await()
         assertEquals(curso, b.await())
         DatosDemostracion.preparar(db)
+        val camilo = db.estudianteDao().buscarPorRut("209834588")!!
+        assertEquals("Camilo", camilo.nombre)
+        assertEquals(curso, camilo.cursoId)
+        assertTrue(PasswordHasher.verificar("1234", camilo.pinHash!!, camilo.pinSalt!!, camilo.pinIteraciones!!))
+        assertEquals(1, db.estudianteDao().observarPerfiles().first().count { it.nombre == "Camilo" })
         val docente = db.docenteDao().buscarPorCorreo("MILO@GMAIL.COM")!!
         assertTrue(PasswordHasher.verificar(
             DatosDemostracion.CLAVE_INICIAL, docente.claveHash, docente.claveSalt, docente.claveIteraciones
@@ -35,6 +40,31 @@ class DatosDemostracionTest {
         listOf("lenguaje", "matematica", "ciencias", "historia").forEach { asignatura ->
             assertEquals(10, db.actividadDao().observarPorCursoYAsignatura(curso, asignatura, docente.id).first().size)
         }
+    }
+
+    @Test fun noRecreaNiReactivaEstudianteDeDemostracionRetirado() = runBlocking {
+        val curso = DatosDemostracion.preparar(db)
+        val docente = db.docenteDao().buscarPorCorreo(DatosDemostracion.CORREO)!!
+        val camilo = db.estudianteDao().buscarPorRut("209834588")!!
+        db.estudianteDao().retirarSeleccion(listOf(camilo.id), curso, docente.id)
+        DatosDemostracion.preparar(db)
+        assertTrue(db.estudianteDao().buscarPorRut("209834588")!!.retirado)
+        assertTrue(db.estudianteDao().observarPerfiles().first().none { it.id == camilo.id })
+    }
+
+    @Test fun conservaPerfilExistenteConElMismoRut() = runBlocking {
+        val curso = DatosDemostracion.preparar(db)
+        val original = db.estudianteDao().buscarPorRut("209834588")!!
+        db.estudianteDao().actualizarFotoPerfil(original.id, "foto-propia")
+        val nuevaClave = PasswordHasher.generar("4321")
+        val docente = db.docenteDao().buscarPorCorreo(DatosDemostracion.CORREO)!!
+        db.estudianteDao().actualizarAcceso(original.id, curso, docente.id, original.rut!!,
+            nuevaClave.hash, nuevaClave.salt, nuevaClave.iteraciones)
+        DatosDemostracion.preparar(db)
+        val guardado = db.estudianteDao().buscarPorRut("209834588")!!
+        assertEquals(original.id, guardado.id)
+        assertEquals("foto-propia", guardado.fotoRuta)
+        assertEquals(nuevaClave.hash, guardado.pinHash)
     }
 
     @Test fun conservaClaveCursoYResultadosExistentes() = runBlocking {

@@ -85,7 +85,9 @@ internal fun ResolverActividadContenido(
     onRecargar: () -> Unit = {},
     onSiguiente: () -> Unit = {},
     onReintentarContinuacion: () -> Unit = {},
-    onRecargarProgreso: () -> Unit = onRecargar
+    onRecargarProgreso: () -> Unit = onRecargar,
+    mostrarProgreso: Boolean = true,
+    mostrarEstrella: Boolean = true
 ) {
     var pistaVisible by rememberSaveable(estado.actividad?.id) { mutableStateOf(false) }
     var celebrar by rememberSaveable(estado.actividad?.id) { mutableStateOf(false) }
@@ -145,7 +147,7 @@ internal fun ResolverActividadContenido(
                         Text("Volver a las actividades")
                     }
                 }
-                if (estado.actividad != null && !estado.cargando) {
+                if (mostrarProgreso && estado.actividad != null && !estado.cargando) {
                     item(key = "progreso_asignatura") {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
@@ -314,13 +316,13 @@ internal fun ResolverActividadContenido(
                                         modifier = Modifier.fillMaxWidth()
                                             .selectable(
                                                 selected = seleccionada,
-                                                enabled = respondiendo && !estado.enviando,
+                                                enabled = respondiendo && !estado.enviando && !estado.seleccionBloqueada,
                                                 role = Role.RadioButton,
                                                 onClick = { onSeleccionar(indice) }
                                             ).heightIn(min = 64.dp).padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        RadioButton(selected = seleccionada, onClick = null, enabled = respondiendo && !estado.enviando)
+                                        RadioButton(selected = seleccionada, onClick = null, enabled = respondiendo && !estado.enviando && !estado.seleccionBloqueada)
                                         Text("${"ABCD"[indice]}. $texto", modifier = Modifier.padding(start = 12.dp).weight(1f), style = MaterialTheme.typography.bodyLarge)
                                     }
                                 }
@@ -345,7 +347,7 @@ internal fun ResolverActividadContenido(
                                     PuduExplorador(Modifier.size(80.dp), animo = animoPudu)
                                     Text(
                                         when {
-                                            intento.correcta -> "¡Lo lograste! Ganaste una estrella ⭐"
+                                            intento.correcta -> if (mostrarEstrella) "¡Lo lograste! Ganaste una estrella ⭐" else "¡Lo lograste! ¡Muy bien! ⭐"
                                             !intento.finalizada -> "Probemos otra estrategia. ¡Tú puedes!"
                                             else -> "¡Terminaste la actividad! Sigamos aprendiendo."
                                         },

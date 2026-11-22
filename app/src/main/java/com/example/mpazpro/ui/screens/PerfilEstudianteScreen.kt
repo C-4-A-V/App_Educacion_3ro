@@ -65,7 +65,7 @@ fun PerfilEstudianteScreen(
                                 ImagenInteligente(estudiante.fotoRuta, "Mi fotografía", Modifier.size(88.dp))
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text(estudiante.nombre, style = MaterialTheme.typography.titleLarge)
-                                    Text(estudiante.cursoNombre, style = MaterialTheme.typography.bodyLarge)
+                                    Text(com.example.mpazpro.data.repository.PropuestaVinculacionCursos.nombreVisible(estudiante.cursoNombre), style = MaterialTheme.typography.bodyLarge)
                                     Text("Estudiante MPAZ", color = MaterialTheme.colorScheme.secondary,
                                         style = MaterialTheme.typography.labelLarge)
                                 }

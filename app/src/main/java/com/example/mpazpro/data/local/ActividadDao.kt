@@ -100,6 +100,7 @@ interface ActividadDao {
         WHERE a.cursoId = :cursoId
           AND a.asignaturaId = :asignaturaId
           AND c.docenteId = :docenteId
+          AND NOT EXISTS (SELECT 1 FROM actividades_retiradas r WHERE r.actividadId = a.id)
         ORDER BY a.creadaEn DESC, a.id DESC
         """
     )

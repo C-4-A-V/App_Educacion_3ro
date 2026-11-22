@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.mpazpro.R
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import com.example.mpazpro.ui.components.anchoFormulario
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,28 @@ fun EstudiantesScreen(
 ) {
     DocenteTheme {
     val estado by estudiantesViewModel.uiState.collectAsStateWithLifecycle()
+    var editandoLista by remember(cursoId, docenteId) { mutableStateOf(false) }
+    var seleccionados by remember(cursoId, docenteId) { mutableStateOf<Set<Long>>(emptySet()) }
+    var confirmarRetiro by remember(cursoId, docenteId) { mutableStateOf(false) }
+    var verRetirados by remember(cursoId, docenteId) { mutableStateOf(false) }
+
+    if (confirmarRetiro) {
+        AlertDialog(
+            onDismissRequest = { confirmarRetiro = false },
+            title = { Text("Retirar estudiantes") },
+            text = { Text("Se retirarán ${seleccionados.size} estudiantes de este curso y no podrán ingresar mientras estén retirados. Sus perfiles, fotos y avances se conservan y podrás restaurarlos.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarRetiro = false
+                    estudiantesViewModel.retirarEstudiantes(seleccionados) {
+                        seleccionados = emptySet()
+                        editandoLista = false
+                    }
+                }) { Text("Retirar") }
+            },
+            dismissButton = { TextButton(onClick = { confirmarRetiro = false }) { Text("Cancelar") } }
+        )
+    }
 
     if (estado.editandoAccesoId != null) {
         AlertDialog(
@@ -78,7 +102,7 @@ fun EstudiantesScreen(
 
         item {
             EncabezadoDocente(
-                titulo = estado.curso?.nombre ?: "Curso",
+                titulo = estado.curso?.nombre?.let(com.example.mpazpro.data.repository.PropuestaVinculacionCursos::nombreVisible) ?: "Curso",
                 detalle = "Organiza tu grupo y acompaña a cada estudiante."
             )
         }
@@ -237,6 +261,29 @@ fun EstudiantesScreen(
                 )
             }
 
+            if (estado.estudiantes.isNotEmpty()) {
+                item {
+                    val ocupado = estado.guardando || estado.importandoFoto
+                    OutlinedButton(
+                        onClick = { editandoLista = !editandoLista; seleccionados = emptySet() },
+                        enabled = !ocupado
+                    ) { Text(if (editandoLista) "Cancelar edición" else "Editar estudiantes") }
+                    if (editandoLista) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { seleccionados = estado.estudiantes.map { it.id }.toSet() }, enabled = !ocupado) {
+                                Text("Seleccionar todos")
+                            }
+                            TextButton(onClick = { seleccionados = emptySet() }, enabled = !ocupado && seleccionados.isNotEmpty()) {
+                                Text("Quitar selección")
+                            }
+                        }
+                        Button(onClick = { confirmarRetiro = true }, enabled = !ocupado && seleccionados.isNotEmpty()) {
+                            Text("Retirar seleccionados (${seleccionados.size})")
+                        }
+                    }
+                }
+            }
+
             if (estado.estudiantes.isEmpty()) {
                 item {
                     Text("Todavía no hay estudiantes registrados en este curso.")
@@ -253,6 +300,16 @@ fun EstudiantesScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
+                        if (editandoLista) {
+                            Checkbox(
+                                checked = estudiante.id in seleccionados,
+                                enabled = !estado.guardando && !estado.importandoFoto,
+                                onCheckedChange = { marcada ->
+                                    seleccionados = if (marcada) seleccionados + estudiante.id else seleccionados - estudiante.id
+                                },
+                                modifier = Modifier.semantics { contentDescription = "Seleccionar ${estudiante.nombre}" }
+                            )
+                        }
                         ImagenInteligente(
                             ruta = estudiante.fotoRuta,
                             descripcion = "Fotografía de ${estudiante.nombre}"
@@ -272,8 +329,28 @@ fun EstudiantesScreen(
                             )
                         }
                     }
-                    TextButton(onClick = { estudiantesViewModel.editarAcceso(estudiante.id) }) {
-                        Text(if (estudiante.rut == null) "Configurar RUT y PIN" else "Cambiar RUT o PIN")
+                    if (!editandoLista) {
+                        TextButton(onClick = { estudiantesViewModel.editarAcceso(estudiante.id) }) {
+                            Text(if (estudiante.rut == null) "Configurar RUT y PIN" else "Cambiar RUT o PIN")
+                        }
+                    }
+                }
+            }
+            if (estado.retirados.isNotEmpty()) {
+                item {
+                    OutlinedButton(onClick = { verRetirados = !verRetirados }, enabled = !estado.guardando) {
+                        Text(if (verRetirados) "Ocultar estudiantes retirados" else "Ver estudiantes retirados (${estado.retirados.size})")
+                    }
+                }
+                if (verRetirados) {
+                    items(estado.retirados, key = { "retirado_${it.id}" }) { estudiante ->
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(estudiante.nombre, style = MaterialTheme.typography.titleMedium)
+                                TextButton(onClick = { estudiantesViewModel.restaurarEstudiante(estudiante.id) },
+                                    enabled = !estado.guardando && !estado.importandoFoto) { Text("Restaurar estudiante") }
+                            }
+                        }
                     }
                 }
             }

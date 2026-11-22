@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -62,14 +63,12 @@ class EstudiantesViewModel(
 
                 _uiState.update { it.copy(curso = curso) }
 
-                repository.observarEstudiantes(cursoId, docenteId)
-                    .collect { estudiantes ->
-                        _uiState.update {
-                            it.copy(
-                                estudiantes = estudiantes,
-                                cargando = false
-                            )
-                        }
+                combine(
+                    repository.observarEstudiantes(cursoId, docenteId),
+                    repository.observarRetirados(cursoId, docenteId)
+                ) { estudiantes, retirados -> estudiantes to retirados }
+                    .collect { (estudiantes, retirados) ->
+                        _uiState.update { it.copy(estudiantes = estudiantes, retirados = retirados, cargando = false) }
                     }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
@@ -80,6 +79,48 @@ class EstudiantesViewModel(
                         mensaje = "No se pudieron cargar los estudiantes."
                     )
                 }
+            }
+        }
+    }
+
+    fun retirarEstudiantes(ids: Set<Long>, alTerminar: () -> Unit) {
+        val actual = contextoActual ?: return
+        val estado = _uiState.value
+        if (estado.guardando || estado.importandoFoto || ids.isEmpty() ||
+            !estado.estudiantes.map { it.id }.containsAll(ids)) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                repository.retirarEstudiantes(ids.toList(), actual.first, actual.second)
+                if (contextoActual == actual) {
+                    _uiState.update { it.copy(mensaje = "Estudiantes retirados: ${ids.size}. Puedes restaurarlos cuando quieras.") }
+                    alTerminar()
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (contextoActual == actual) _uiState.update { it.copy(mensaje = "No se pudieron retirar los estudiantes. Vuelve a intentarlo.") }
+            } finally {
+                if (contextoActual == actual) _uiState.update { it.copy(guardando = false) }
+            }
+        }
+    }
+
+    fun restaurarEstudiante(id: Long) {
+        val actual = contextoActual ?: return
+        val estado = _uiState.value
+        if (estado.guardando || estado.importandoFoto || estado.retirados.none { it.id == id }) return
+        _uiState.update { it.copy(guardando = true, mensaje = null) }
+        viewModelScope.launch {
+            try {
+                repository.restaurarEstudiante(id, actual.first, actual.second)
+                if (contextoActual == actual) _uiState.update { it.copy(mensaje = "Estudiante restaurado con su perfil y avances.") }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                if (contextoActual == actual) _uiState.update { it.copy(mensaje = "No se pudo restaurar al estudiante.") }
+            } finally {
+                if (contextoActual == actual) _uiState.update { it.copy(guardando = false) }
             }
         }
     }

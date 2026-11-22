@@ -1,11 +1,15 @@
 package com.example.mpazpro.ui.viewmodel
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.repository.ActividadRepository
 import com.example.mpazpro.data.repository.CursoRepository
+import com.example.mpazpro.data.repository.PublicadorActividad
+import com.example.mpazpro.data.remote.ServicioActividadesServidor
+import com.example.mpazpro.data.remote.ServicioPublicaciones
 import com.example.mpazpro.model.ActividadFormulario
 import com.example.mpazpro.model.CrearActividadUiState
 import com.example.mpazpro.validation.ActividadValidator
@@ -25,6 +29,8 @@ class CrearActividadViewModel(
 
     private val cursos = CursoRepository(database.cursoDao())
     private val actividades = ActividadRepository(database)
+    private val publicador = PublicadorActividad(database, ServicioActividadesServidor.api, ServicioPublicaciones.api)
+    private val esDepuracion = (application.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private val _uiState = MutableStateFlow(
         CrearActividadUiState()
@@ -195,31 +201,43 @@ class CrearActividadViewModel(
         }
 
         viewModelScope.launch {
-            try {
+            val id = try {
                 actividades.crearActividad(
                     cursoId = curso.id,
                     asignaturaId = asignaturaId,
                     docenteId = docenteId,
                     formulario = actual.formulario
                 )
-
-                val prefijo = "actividad_${curso.id}_${docenteId}_${asignaturaId}_"
-                savedState.keys().filter { it.startsWith(prefijo) }.forEach { savedState.remove<Any>(it) }
-                _uiState.update {
-                    it.copy(
-                        guardando = false,
-                        guardado = true
-                    )
-                }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (_: Exception) {
-                _uiState.update {
-                    it.copy(
-                        guardando = false,
-                        mensaje = "No se pudo guardar la actividad."
-                    )
-                }
+                _uiState.update { it.copy(guardando = false, mensaje = "No se pudo guardar la actividad.") }
+                return@launch
+            }
+
+            val prefijo = "actividad_${curso.id}_${docenteId}_${asignaturaId}_"
+            savedState.keys().filter { it.startsWith(prefijo) }.forEach { savedState.remove<Any>(it) }
+            val pendiente = database.publicacionPendienteDao().buscar(id) != null
+            _uiState.update { it.copy(guardado = true, actividadGuardadaId = id, publicacionPendiente = pendiente) }
+            // Guardar no implica compartir: el docente decide cuándo publicar.
+            _uiState.update { it.copy(guardando = false) }
+        }
+    }
+
+    fun reintentarPublicacion() {
+        val actual = _uiState.value
+        val id = actual.actividadGuardadaId ?: return
+        val docenteId = contexto?.second ?: return
+        if (!esDepuracion || actual.guardando || !actual.publicacionPendiente) return
+        _uiState.update { it.copy(guardando = true) }
+        viewModelScope.launch {
+            try {
+                publicador.publicar(id, docenteId)
+                _uiState.update { it.copy(publicacionPendiente = false, guardando = false) }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (_: Exception) {
+                _uiState.update { it.copy(guardando = false) }
             }
         }
     }

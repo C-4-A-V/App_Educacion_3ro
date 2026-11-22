@@ -155,7 +155,8 @@ fun InicioEstudianteScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer)
                     ) {
                         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("⭐ ${progreso.correctas} estrellas · ¡Sigue brillando!", style = MaterialTheme.typography.titleMedium)
+                            Text("⭐ ${progreso.correctas} estrellas · Tu avance anterior", style = MaterialTheme.typography.titleMedium)
+                            Text("Estas cifras corresponden a prácticas anteriores en este dispositivo; las preguntas compartidas todavía no se incluyen.", style = MaterialTheme.typography.bodySmall)
                             LinearProgressIndicator(progress = { avance }, modifier = Modifier.fillMaxWidth().height(10.dp))
                             Text("${progreso.completadas} de ${progreso.total} actividades completadas")
                             Text(

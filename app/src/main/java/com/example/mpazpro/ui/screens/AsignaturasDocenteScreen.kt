@@ -24,6 +24,7 @@ fun AsignaturasDocenteScreen(
     docenteId: Long,
     onVolver: () -> Unit,
     onAbrirAsignatura: (String) -> Unit,
+    mostrarBanco: Boolean = true,
     modifier: Modifier = Modifier,
     cursoViewModel: CursoDocenteViewModel = viewModel()
 ) {
@@ -80,7 +81,7 @@ fun AsignaturasDocenteScreen(
         if (curso != null && !estado.cargando) {
             item {
                 Text(
-                    text = curso.nombre,
+                    text = com.example.mpazpro.data.repository.PropuestaVinculacionCursos.nombreVisible(curso.nombre),
                     style = MaterialTheme.typography.titleLarge
                 )
 
@@ -88,6 +89,17 @@ fun AsignaturasDocenteScreen(
                     text = "Elige la asignatura que deseas gestionar.",
                     modifier = Modifier.padding(top = 8.dp)
                 )
+            }
+
+            if (mostrarBanco && estado.vinculado) {
+                item {
+                    OutlinedButton(onClick = cursoViewModel::prepararBanco, enabled = !estado.preparandoBanco) {
+                        Text(if (estado.preparandoBanco) "Preparando…" else "Preparar banco completo")
+                    }
+                    Text("Deja listas las preguntas del banco para elegir cuáles compartir.",
+                        style = MaterialTheme.typography.bodySmall)
+                    estado.avisoBanco?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
             }
 
             Asignatura.entries.forEach { asignatura ->

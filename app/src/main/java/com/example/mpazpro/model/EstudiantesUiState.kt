@@ -6,6 +6,7 @@ import com.example.mpazpro.data.local.EstudianteEntity
 data class EstudiantesUiState(
     val curso: CursoEntity? = null,
     val estudiantes: List<EstudianteEntity> = emptyList(),
+    val retirados: List<EstudianteEntity> = emptyList(),
     val nombre: String = "",
     val rut: String = "",
     val pin: String = "",

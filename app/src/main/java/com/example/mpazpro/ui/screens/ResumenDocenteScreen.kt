@@ -150,7 +150,7 @@ internal fun ResumenDocenteContenido(
                 titulo = when {
                     materia != null -> materia.titulo
                     estudiante != null -> estudiante.nombre
-                    curso != null -> "Resultados · ${curso.nombre}"
+                    curso != null -> "Resultados · ${com.example.mpazpro.data.repository.PropuestaVinculacionCursos.nombreVisible(curso.nombre)}"
                     else -> "Resultados por curso"
                 },
                 detalle = when {
@@ -175,7 +175,7 @@ internal fun ResumenDocenteContenido(
                     Card(onClick = { onAbrirCurso(actual.id) }, modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("📚 ${actual.nombre}", style = MaterialTheme.typography.titleLarge)
+                            Text("📚 ${com.example.mpazpro.data.repository.PropuestaVinculacionCursos.nombreVisible(actual.nombre)}", style = MaterialTheme.typography.titleLarge)
                             Text("${estado.alumnos.count { it.cursoId == actual.id }} estudiantes")
                             Text("Ver resultados →", style = MaterialTheme.typography.labelLarge)
                         }

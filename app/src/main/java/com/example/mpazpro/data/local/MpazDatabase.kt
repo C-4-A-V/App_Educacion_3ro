@@ -14,9 +14,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         EstudianteEntity::class,
         ActividadEntity::class,
         IntentoActividadEntity::class,
-        MensajeDocenteEntity::class
+        MensajeDocenteEntity::class,
+        VinculoCursoEntity::class,
+        PublicacionPendienteEntity::class,
+        ActividadRetiradaEntity::class,
+        ActividadCopiaEntity::class
     ],
-    version = 10,
+    version = 15,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -32,6 +36,14 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun intentoActividadDao(): IntentoActividadDao
 
     abstract fun mensajeDocenteDao(): MensajeDocenteDao
+
+    abstract fun vinculoCursoDao(): VinculoCursoDao
+
+    abstract fun publicacionPendienteDao(): PublicacionPendienteDao
+
+    abstract fun actividadRetiradaDao(): ActividadRetiradaDao
+
+    abstract fun actividadCopiaDao(): ActividadCopiaDao
 
     companion object {
 
@@ -234,6 +246,61 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS vinculos_curso (
+                    cursoLocalId INTEGER NOT NULL PRIMARY KEY,
+                    catalogoId TEXT NOT NULL,
+                    cursoServidorId INTEGER NOT NULL,
+                    FOREIGN KEY(cursoLocalId) REFERENCES cursos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_vinculos_curso_catalogoId_cursoServidorId ON vinculos_curso(catalogoId, cursoServidorId)")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS publicaciones_pendientes (
+                    actividadLocalId INTEGER NOT NULL PRIMARY KEY,
+                    clavePublicacion TEXT NOT NULL,
+                    catalogoId TEXT NOT NULL,
+                    cursoServidorId INTEGER NOT NULL,
+                    actividadServidorId INTEGER,
+                    FOREIGN KEY(actividadLocalId) REFERENCES actividades(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_publicaciones_pendientes_clavePublicacion ON publicaciones_pendientes(clavePublicacion)")
+            }
+        }
+
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS actividades_retiradas (
+                    actividadId INTEGER NOT NULL PRIMARY KEY,
+                    FOREIGN KEY(actividadId) REFERENCES actividades(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE estudiantes ADD COLUMN retirado INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS actividades_copiadas (
+                    origenId INTEGER NOT NULL, cursoDestinoId INTEGER NOT NULL, copiaId INTEGER NOT NULL,
+                    PRIMARY KEY(origenId, cursoDestinoId),
+                    FOREIGN KEY(origenId) REFERENCES actividades(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(cursoDestinoId) REFERENCES cursos(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(copiaId) REFERENCES actividades(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_actividades_copiadas_cursoDestinoId ON actividades_copiadas(cursoDestinoId)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_actividades_copiadas_copiaId ON actividades_copiadas(copiaId)")
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -251,6 +318,11 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_7_8,
                         MIGRATION_8_9,
                         MIGRATION_9_10,
+                        MIGRATION_10_11,
+                        MIGRATION_11_12,
+                        MIGRATION_12_13,
+                        MIGRATION_13_14,
+                        MIGRATION_14_15,
                     )
                     .build()
                     .also { instancia = it }

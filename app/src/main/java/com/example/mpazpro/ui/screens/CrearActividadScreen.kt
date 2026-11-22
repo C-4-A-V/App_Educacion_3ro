@@ -41,7 +41,19 @@ fun CrearActividadScreen(
     LaunchedEffect(cursoId, docenteId, asignatura.id) {
         actividadViewModel.cargar(cursoId, docenteId, asignatura.id)
     }
-    LaunchedEffect(estado.guardado) { if (estado.guardado) onGuardado() }
+    LaunchedEffect(estado.guardado, estado.publicacionPendiente, estado.guardando) {
+        if (estado.guardado && !estado.publicacionPendiente && !estado.guardando) onGuardado()
+    }
+    if (estado.guardado && estado.publicacionPendiente && !estado.guardando) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Actividad guardada") },
+            text = { Text("Está guardada en este dispositivo. En Actividades puedes seleccionarla y confirmar cuándo compartirla.") },
+            confirmButton = {
+                TextButton(onClick = onGuardado) { Text("Ir a actividades") }
+            }
+        )
+    }
     CrearActividadContenido(
         estado, asignatura, onVolver,
         actividadViewModel::actualizarTitulo, actividadViewModel::actualizarInstrucciones,
@@ -90,7 +102,7 @@ internal fun CrearActividadContenido(
         }
         if (estado.curso != null && !estado.cargando) {
             item {
-                Text(estado.curso.nombre, style = MaterialTheme.typography.titleMedium)
+                Text(com.example.mpazpro.data.repository.PropuestaVinculacionCursos.nombreVisible(estado.curso.nombre), style = MaterialTheme.typography.titleMedium)
                 Text(asignatura.titulo)
             }
             item {

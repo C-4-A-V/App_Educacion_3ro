@@ -31,5 +31,6 @@ data class EstudianteEntity(
     val pinSalt: String? = null,
     val pinIteraciones: Int? = null,
     @ColumnInfo(defaultValue = "0") val intentosFallidos: Int = 0,
-    @ColumnInfo(defaultValue = "0") val bloqueadoHasta: Long = 0
+    @ColumnInfo(defaultValue = "0") val bloqueadoHasta: Long = 0,
+    @ColumnInfo(defaultValue = "0") val retirado: Boolean = false
 )

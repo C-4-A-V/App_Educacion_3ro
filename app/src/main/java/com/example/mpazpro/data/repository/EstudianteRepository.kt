@@ -27,6 +27,17 @@ class EstudianteRepository(
 
     fun observarPerfiles() = estudianteDao.observarPerfiles()
 
+    fun observarRetirados(cursoId: Long, docenteId: Long) = estudianteDao.observarRetirados(cursoId, docenteId)
+
+    suspend fun retirarEstudiantes(ids: List<Long>, cursoId: Long, docenteId: Long) {
+        require(ids.size <= 900)
+        estudianteDao.retirarSeleccion(ids, cursoId, docenteId)
+    }
+
+    suspend fun restaurarEstudiante(id: Long, cursoId: Long, docenteId: Long) {
+        check(estudianteDao.restaurar(id, cursoId, docenteId) == 1)
+    }
+
     fun observarProgreso(estudianteId: Long) =
         actividadDao.observarProgresoEstudiante(estudianteId)
 
@@ -75,7 +86,7 @@ class EstudianteRepository(
     suspend fun autenticar(rut: String, pin: String): Long? {
         val rutNormal = RutValidator.normalizar(rut) ?: return null
         if (!RutValidator.pinValido(pin)) return null
-        val estudiante = estudianteDao.buscarPorRut(rutNormal) ?: return null
+        val estudiante = estudianteDao.buscarActivoPorRut(rutNormal) ?: return null
         val hash = estudiante.pinHash ?: return null
         val salt = estudiante.pinSalt ?: return null
         val iteraciones = estudiante.pinIteraciones ?: return null

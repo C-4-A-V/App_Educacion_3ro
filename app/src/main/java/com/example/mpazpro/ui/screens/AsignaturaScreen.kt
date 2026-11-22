@@ -30,7 +30,8 @@ fun AsignaturaScreen(
     onVolver: () -> Unit,
     onAbrirActividad: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    actividadesViewModel: ActividadesEstudianteViewModel = viewModel()
+    actividadesViewModel: ActividadesEstudianteViewModel = viewModel(),
+    onAbrirActividadRemota: (Long) -> Unit = {}
 ) {
     val estado by actividadesViewModel.uiState
         .collectAsStateWithLifecycle()
@@ -40,6 +41,10 @@ fun AsignaturaScreen(
             estudianteId = estudiante.id,
             asignaturaId = asignatura.id
         )
+    }
+
+    ActualizacionAutomatica(estudiante.id to asignatura.id) {
+        actividadesViewModel.actualizarCompartidasAutomaticamente()
     }
 
     AventuraTheme {
@@ -89,7 +94,7 @@ fun AsignaturaScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Progreso en ${asignatura.titulo}",
+                        text = "Avance anterior en ${asignatura.titulo}",
                         style = MaterialTheme.typography.titleMedium,
                         color = asignatura.textoAventura()
                     )
@@ -117,6 +122,8 @@ fun AsignaturaScreen(
                             color = asignatura.textoAventura()
                         )
                     }
+
+                    Text("Este avance corresponde a prácticas anteriores guardadas en este dispositivo; no incluye preguntas compartidas.", style = MaterialTheme.typography.bodySmall)
 
                     if (estado.progreso.completadas > 0) {
                         Text(
@@ -157,7 +164,9 @@ fun AsignaturaScreen(
         if (
             !estado.cargando &&
             estado.mensaje == null &&
-            estado.actividades.isEmpty()
+            estado.actividades.isEmpty() &&
+            estado.actividadesCompartidas.isEmpty() &&
+            !estado.cargandoCompartidas
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
@@ -176,6 +185,40 @@ fun AsignaturaScreen(
                         Text(
                             text = "Aquí aparecerán las actividades que tu docente prepare para esta asignatura."
                         )
+                    }
+                }
+            }
+        }
+
+        if (estado.cargandoCompartidas) {
+            item(span = { GridItemSpan(maxLineSpan) }) { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        }
+        if (estado.errorCompartidas) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    Text("No pudimos cargar las preguntas compartidas. Comprueba la conexión.")
+                    TextButton(onClick = actividadesViewModel::actualizarCompartidas) { Text("Intentar otra vez") }
+                }
+            }
+        }
+        if (estado.actividadesCompartidas.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text("Preguntas compartidas", style = MaterialTheme.typography.titleMedium)
+            }
+            items(estado.actividadesCompartidas, key = { "remota_${it.id}" }) { actividad ->
+                Card(
+                    onClick = { onAbrirActividadRemota(actividad.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = asignatura.colorAventura(),
+                        contentColor = asignatura.textoAventura()
+                    )
+                ) {
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(actividad.titulo, style = MaterialTheme.typography.titleMedium)
+                        Text(actividad.instrucciones)
+                        Text("Pregunta compartida · Abrir", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

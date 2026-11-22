@@ -50,6 +50,14 @@ class AccesoEstudianteViewModel(
             try {
                 DatosDemostracion.preparar(database)
                 repository.observarPerfiles().collect { perfiles ->
+                    val idActual = _uiState.value.seleccionado?.id ?: savedState.get<Long>("estudianteId")
+                    if (idActual != null && perfiles.none { it.id == idActual }) {
+                        savedState.remove<Long>("estudianteId")
+                        progresoJob?.cancel()
+                        progresoJob = null
+                        _uiState.update { it.copy(progreso = ProgresoEstudiante(), paraContinuar = null,
+                            mensajesDocente = emptyList()) }
+                    }
                     _uiState.update { actual ->
                         actual.copy(
                             perfiles = perfiles,

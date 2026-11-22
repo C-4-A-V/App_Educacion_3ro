@@ -13,23 +13,8 @@ class CursoRepository(
         return cursoDao.observarPorDocente(docenteId)
     }
 
-    suspend fun crearCurso(
-        docenteId: Long,
-        nombre: String
-    ): Long {
-        // Unifica mayúsculas y espacios para detectar duplicados.
-        val nombreNormalizado = nombre
-            .trim()
-            .replace(Regex("\\s+"), " ")
-            .uppercase(Locale.ROOT)
-
-        return cursoDao.insertar(
-            CursoEntity(
-                docenteId = docenteId,
-                nombre = nombreNormalizado
-            )
-        )
-    }
+    suspend fun crearSiguiente(docenteId: Long, seccionConfirmada: Char): Long =
+        cursoDao.crearSiguienteConfirmado(docenteId, seccionConfirmada)
     suspend fun obtenerCurso(
         cursoId: Long,
         docenteId: Long
