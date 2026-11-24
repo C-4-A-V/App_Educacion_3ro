@@ -1,8 +1,6 @@
 package com.example.mpazpro.data.remote
 
 import com.google.gson.annotations.SerializedName
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -39,8 +37,7 @@ interface EstadoPublicacionApi {
 
 object ServicioEstadoPublicacion {
     val api: EstadoPublicacionApi by lazy {
-        Retrofit.Builder().baseUrl("http://127.0.0.1:8080/")
-            .addConverterFactory(GsonConverterFactory.create()).build().create(EstadoPublicacionApi::class.java)
+        RetrofitServidor.instancia.create(EstadoPublicacionApi::class.java)
     }
 }
 
@@ -55,10 +52,6 @@ interface PublicacionesApi {
 
 object ServicioPublicaciones {
     val api: PublicacionesApi by lazy {
-        Retrofit.Builder()
-            .baseUrl("http://127.0.0.1:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(PublicacionesApi::class.java)
+        RetrofitServidor.instancia.create(PublicacionesApi::class.java)
     }
 }

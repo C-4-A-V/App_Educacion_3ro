@@ -20,8 +20,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        val ruta = providers.environmentVariable("MPAZ_FIRMA_ARCHIVO").orNull
+        val claveAlmacen = providers.environmentVariable("MPAZ_FIRMA_ALMACEN").orNull
+        val alias = providers.environmentVariable("MPAZ_FIRMA_ALIAS").orNull
+        val claveLlave = providers.environmentVariable("MPAZ_FIRMA_CLAVE").orNull
+        val valoresFirma = listOf(ruta, claveAlmacen, alias, claveLlave)
+        require(valoresFirma.all { it.isNullOrBlank() } || valoresFirma.all { !it.isNullOrBlank() }) {
+            "Para firmar release, configura las cuatro variables MPAZ_FIRMA_*."
+        }
+        if (valoresFirma.all { !it.isNullOrBlank() }) {
+            create("firmaExterna") {
+                storeFile = file(requireNotNull(ruta))
+                storePassword = claveAlmacen
+                keyAlias = alias
+                keyPassword = claveLlave
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "URL_SERVIDOR", "\"http://127.0.0.1:8080/\"")
+        }
         release {
+            buildConfigField("String", "URL_SERVIDOR", "\"https://servidor-no-configurado.invalid/\"")
+            signingConfigs.findByName("firmaExterna")?.let { signingConfig = it }
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -36,6 +60,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

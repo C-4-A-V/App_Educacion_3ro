@@ -1,8 +1,6 @@
 package com.example.mpazpro.data.remote
 
 import com.google.gson.annotations.SerializedName
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.POST
 
@@ -39,11 +37,6 @@ interface ActividadesServidorApi {
 
 object ServicioActividadesServidor {
     val api: ActividadesServidorApi by lazy {
-        Retrofit.Builder()
-            // El puerto se conecta con adb reverse durante la prueba en el emulador.
-            .baseUrl("http://127.0.0.1:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ActividadesServidorApi::class.java)
+        RetrofitServidor.instancia.create(ActividadesServidorApi::class.java)
     }
 }

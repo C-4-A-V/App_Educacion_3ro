@@ -1,7 +1,5 @@
 package com.example.mpazpro.data.remote
 
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -15,7 +13,6 @@ interface RetiroPublicacionesApi {
 
 object ServicioRetiroPublicaciones {
     val api: RetiroPublicacionesApi by lazy {
-        Retrofit.Builder().baseUrl("http://127.0.0.1:8080/")
-            .addConverterFactory(GsonConverterFactory.create()).build().create(RetiroPublicacionesApi::class.java)
+        RetrofitServidor.instancia.create(RetiroPublicacionesApi::class.java)
     }
 }
