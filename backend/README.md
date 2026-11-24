@@ -33,6 +33,21 @@ adb -s emulator-5554 reverse tcp:8080 tcp:8083
 
 Si el identificador del emulador cambia, consulta `adb devices` y usa el indicado. La pantalla docente «Actividades del servidor · prueba» permite revisar cursos. Los cursos vinculados mantienen sus datos locales. Las actividades nuevas se guardan primero en el dispositivo y el docente decide cuáles compartir; el envío requiere confirmación. Las publicaciones pendientes se pueden reintentar desde la app. En depuración, un estudiante cuyo curso esté vinculado puede consultar y responder preguntas remotas, usando un identificador aleatorio local en lugar de RUT o PIN. Este flujo es experimental: los resultados remotos todavía no aparecen en el resumen docente ni se incluyen en el progreso local, y la identidad del estudiante no se sincroniza entre dispositivos. El perfil `aula-local` es solo para pruebas con datos ficticios: escucha en el computador local, no autentica docentes y no debe exponerse a Internet. Las bases temporales no permiten guardar vínculos.
 
+## MySQL local de prueba
+
+El perfil opcional `mysql` usa las variables `MPAZ_MYSQL_URL`, `MPAZ_MYSQL_USUARIO` y `MPAZ_MYSQL_CLAVE`. H2 sigue siendo la base predeterminada. Configura las variables en la terminal y no subas contraseñas a Git. Por ejemplo, con un servidor local y una base de prueba previamente creada:
+
+```powershell
+$env:MPAZ_MYSQL_URL = 'jdbc:mysql://127.0.0.1:3307/mpaz_prueba'
+$env:MPAZ_MYSQL_USUARIO = 'usuario_de_prueba'
+$env:MPAZ_MYSQL_CLAVE = 'contraseña_de_prueba'
+.\gradlew.bat -p backend '-Dorg.gradle.java.home=C:\Program Files\Android\Android Studio\jbr' bootRun '--args=--server.port=18083 --spring.profiles.active=mysql,aula-local'
+```
+
+En el computador de desarrollo, el catálogo migrado utiliza el contenedor `mpaz-mysql-aula`, la base `mpaz_aula` y el puerto local 3308. Para iniciarlo, usa Docker Desktop y configura la URL `jdbc:mysql://127.0.0.1:3308/mpaz_aula`; inicia Spring con los perfiles `mysql,aula-local` y el puerto 8083. El contenedor `mpaz-mysql-prueba` es una base separada y no contiene el catálogo migrado.
+
+Este perfil crea o actualiza las tablas para desarrollo en la base elegida. Una base nueva tiene su propio identificador de catálogo: no se deben reemplazar los vínculos existentes de Android ni interpretar esa base vacía como una migración. Antes de trasladar H2 a MySQL hay que preparar una copia, conservar la identidad del catálogo y verificar todas las relaciones y datos. La conexión MySQL no sincroniza automáticamente estudiantes, fotos ni resultados.
+
 ## Consulta de actividades
 
 - `POST http://127.0.0.1:8080/api/actividades`: crea una actividad de prueba con `asignaturaId`, `titulo` y `pregunta`.

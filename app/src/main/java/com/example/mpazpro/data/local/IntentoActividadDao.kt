@@ -11,6 +11,14 @@ import kotlinx.coroutines.flow.Flow
 interface IntentoActividadDao {
 
     @Query("""
+        SELECT DISTINCT a.id FROM actividades a
+        JOIN cursos c ON c.id = a.cursoId
+        JOIN intentos_actividad i ON i.actividadId = a.id
+        WHERE a.cursoId = :cursoId AND a.asignaturaId = :asignaturaId AND c.docenteId = :docenteId
+    """)
+    fun observarIdsRespondidas(cursoId: Long, asignaturaId: String, docenteId: Long): Flow<List<Long>>
+
+    @Query("""
         SELECT a.id AS actividadId, a.cursoId, e.id AS estudianteId, a.asignaturaId,
             a.titulo, a.pregunta, a.maxIntentos, i.numero AS intentosUsados,
             i.finalizada, i.correcta, i.respuestaElegida, i.respuestaCorrecta,
@@ -26,6 +34,9 @@ interface IntentoActividadDao {
         ORDER BY a.asignaturaId, a.creadaEn DESC, a.id DESC, e.nombre
     """)
     fun observarDetalleDocente(docenteId: Long): Flow<List<com.example.mpazpro.model.ResultadoPreguntaDocente>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM intentos_actividad WHERE actividadId = :actividadId)")
+    suspend fun tieneIntentos(actividadId: Long): Boolean
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertar(

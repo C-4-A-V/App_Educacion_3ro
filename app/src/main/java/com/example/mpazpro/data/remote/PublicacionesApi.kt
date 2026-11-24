@@ -6,6 +6,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.GET
+import retrofit2.http.Path
 
 data class SolicitudPublicacion(
     @SerializedName("cursoId") val cursoId: Long,
@@ -27,6 +29,20 @@ data class RespuestaPublicacion(
     @SerializedName("actividadId") val actividadId: Long?,
     @SerializedName("creada") val creada: Boolean
 )
+
+data class EstadoClavePublicacion(val publicada: Boolean, val retirada: Boolean)
+
+interface EstadoPublicacionApi {
+    @GET("api/publicaciones/{clave}/estado")
+    suspend fun estadoClave(@Header("X-Catalogo-Id") catalogoId: String, @Path("clave") clave: String): EstadoClavePublicacion
+}
+
+object ServicioEstadoPublicacion {
+    val api: EstadoPublicacionApi by lazy {
+        Retrofit.Builder().baseUrl("http://127.0.0.1:8080/")
+            .addConverterFactory(GsonConverterFactory.create()).build().create(EstadoPublicacionApi::class.java)
+    }
+}
 
 interface PublicacionesApi {
     @POST("api/publicaciones")

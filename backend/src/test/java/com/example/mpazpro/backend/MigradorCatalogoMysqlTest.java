@@ -1,0 +1,97 @@
+package com.example.mpazpro.backend;
+
+import static org.junit.jupiter.api.Assertions.*;
+import java.sql.*;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
+/** Solo usa el contenedor desechable de ensayo con puerto y base específicos. */
+@EnabledIfEnvironmentVariable(named = "MPAZ_ENSAYO_MIGRACION", matches = "si")
+class MigradorCatalogoMysqlTest {
+    private static final List<String> OTRAS = List.of("actividades", "publicaciones_retiradas",
+        "identidades_estudiante_aula");
+
+    @Test void conservaDatosYRechazaUnSegundoIntentoSinAlterarElDestino() throws Exception {
+        try (Connection origen = DriverManager.getConnection("jdbc:h2:mem:ensayo_migracion;DB_CLOSE_DELAY=-1", "sa", "");
+             Connection destino = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3310/ensayo",
+                 "ensayo", "soloensayo2026")) {
+            crearEsquema(origen);
+            crearEsquema(destino);
+            try (Statement s = origen.createStatement()) {
+                s.executeUpdate("INSERT INTO identidad_catalogo VALUES (1, '11111111-1111-1111-1111-111111111111')");
+                s.executeUpdate("INSERT INTO cursos_compartidos VALUES (7, 'A')");
+                s.executeUpdate("INSERT INTO actividades_completas VALUES (15, 7, '¿Qué necesita el pudú?')");
+                s.executeUpdate("INSERT INTO publicaciones_actividad VALUES (21, 15)");
+                s.executeUpdate("INSERT INTO intentos_aula VALUES (31, 15, NULL)");
+            }
+            try (Statement s = origen.createStatement()) {
+                s.execute("CREATE TABLE instituciones (id BIGINT PRIMARY KEY)");
+                s.execute("INSERT INTO instituciones VALUES (1)");
+            }
+            assertThrows(SQLException.class, () -> new MigradorCatalogo().copiar(origen, destino));
+            try (Statement s = origen.createStatement()) {
+                s.execute("DELETE FROM instituciones WHERE id=1");
+                s.execute("CREATE TABLE tabla_desconocida (id BIGINT PRIMARY KEY)");
+            }
+            assertThrows(SQLException.class, () -> new MigradorCatalogo().copiar(origen, destino));
+            try (Statement s = origen.createStatement()) {
+                s.execute("DROP TABLE tabla_desconocida");
+                s.execute("INSERT INTO identidades_estudiante_aula VALUES (9)");
+            }
+            assertThrows(SQLException.class, () -> new MigradorCatalogo().copiar(origen, destino));
+            try (Statement s = destino.createStatement();
+                 ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM cursos_compartidos")) {
+                assertTrue(rs.next());
+                assertEquals(0, rs.getInt(1));
+            }
+            try (Statement s = origen.createStatement()) {
+                s.execute("DELETE FROM identidades_estudiante_aula WHERE id=9");
+            }
+            var totales = new MigradorCatalogo().copiar(origen, destino);
+            assertEquals(1L, totales.get("intentos_aula"));
+            try (Statement s = destino.createStatement();
+                 ResultSet rs = s.executeQuery("SELECT c.identificador, a.pregunta, i.respuesta " +
+                     "FROM identidad_catalogo c JOIN cursos_compartidos cu ON cu.id=7 " +
+                     "JOIN actividades_completas a ON a.curso_id=cu.id " +
+                     "JOIN publicaciones_actividad p ON p.actividad_id=a.id " +
+                     "JOIN intentos_aula i ON i.actividad_id=a.id")) {
+                assertTrue(rs.next());
+                assertEquals("11111111-1111-1111-1111-111111111111", rs.getString(1));
+                assertEquals("¿Qué necesita el pudú?", rs.getString(2));
+                assertNull(rs.getObject(3));
+                assertFalse(rs.next());
+            }
+            assertThrows(SQLException.class, () -> new MigradorCatalogo().copiar(origen, destino));
+            try (Statement s = destino.createStatement();
+                 ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM cursos_compartidos")) {
+                assertTrue(rs.next());
+                assertEquals(1, rs.getInt(1));
+            }
+            try (Statement s = destino.createStatement()) {
+                s.executeUpdate("INSERT INTO cursos_compartidos (seccion) VALUES ('B')", Statement.RETURN_GENERATED_KEYS);
+                try (ResultSet ids = s.getGeneratedKeys()) {
+                    assertTrue(ids.next());
+                    assertTrue(ids.getLong(1) > 7);
+                }
+            }
+        }
+    }
+
+    private static void crearEsquema(Connection c) throws SQLException {
+        try (Statement s = c.createStatement()) {
+            s.execute("CREATE TABLE identidad_catalogo (id BIGINT PRIMARY KEY, identificador VARCHAR(36) NOT NULL)");
+            String autoincremento = c.getMetaData().getDatabaseProductName().equals("MySQL")
+                ? "BIGINT AUTO_INCREMENT PRIMARY KEY" : "BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY";
+            s.execute("CREATE TABLE cursos_compartidos (id " + autoincremento + ", seccion VARCHAR(1) NOT NULL)");
+            s.execute("CREATE TABLE actividades_completas (id BIGINT PRIMARY KEY, curso_id BIGINT NOT NULL, pregunta VARCHAR(200), FOREIGN KEY (curso_id) REFERENCES cursos_compartidos(id))");
+            s.execute("CREATE TABLE publicaciones_actividad (id BIGINT PRIMARY KEY, actividad_id BIGINT NOT NULL, FOREIGN KEY (actividad_id) REFERENCES actividades_completas(id))");
+            s.execute("CREATE TABLE intentos_aula (id BIGINT PRIMARY KEY, actividad_id BIGINT NOT NULL, respuesta VARCHAR(30), FOREIGN KEY (actividad_id) REFERENCES actividades_completas(id))");
+            for (String tabla : OTRAS) {
+                String restriccion = tabla.equals("identidades_estudiante_aula") &&
+                    c.getMetaData().getDatabaseProductName().equals("MySQL") ? ", CHECK (id < 5)" : "";
+                s.execute("CREATE TABLE " + tabla + " (id BIGINT PRIMARY KEY" + restriccion + ")");
+            }
+        }
+    }
+}

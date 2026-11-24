@@ -21,8 +21,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.security:spring-security-crypto")
     runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.mysql:mysql-connector-j")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -30,4 +30,15 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.register<JavaExec>("migrarCatalogo") {
+    group = "application"
+    description = "Migra una copia H2 de solo lectura a un catálogo MySQL vacío."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("com.example.mpazpro.backend.MigracionCatalogoCli")
+}
+
+springBoot {
+    mainClass.set("com.example.mpazpro.backend.MpazBackendApplication")
 }

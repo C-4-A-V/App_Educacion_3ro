@@ -19,12 +19,14 @@ public class AulaActividadesController {
     private final ActividadCompletaRepository actividades;
     private final IdentidadCatalogoRepository identidades;
     private final PublicacionActividadRepository publicaciones;
+    private final IntentoAulaRepository intentos;
 
     public AulaActividadesController(ActividadCompletaRepository actividades, IdentidadCatalogoRepository identidades,
-                                     PublicacionActividadRepository publicaciones) {
+                                     PublicacionActividadRepository publicaciones, IntentoAulaRepository intentos) {
         this.actividades = actividades;
         this.identidades = identidades;
         this.publicaciones = publicaciones;
+        this.intentos = intentos;
     }
 
     @GetMapping
@@ -33,7 +35,7 @@ public class AulaActividadesController {
         validarCatalogo(catalogoId);
         return actividades.findByCursoIdAndAsignaturaIdOrderByIdAsc(cursoId, asignaturaId).stream()
             .filter(a -> publicaciones.estaActiva(a.getId()))
-            .map(ActividadParaEstudiante::desde).toList();
+            .map(a -> ActividadParaEstudiante.desde(a, intentos.existsByActividadId(a.getId()))).toList();
     }
 
     @GetMapping("/{id}")
@@ -43,7 +45,7 @@ public class AulaActividadesController {
         var actividad = actividades.findById(id)
             .filter(a -> a.getCursoId().equals(cursoId) && publicaciones.estaActiva(a.getId()))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return ActividadParaEstudiante.desde(actividad);
+        return ActividadParaEstudiante.desde(actividad, intentos.existsByActividadId(actividad.getId()));
     }
 
     private void validarCatalogo(String catalogoId) {

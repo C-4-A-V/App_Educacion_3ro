@@ -63,6 +63,9 @@ interface ActividadDao {
     """)
     fun observarParaContinuar(estudianteId: Long): Flow<com.example.mpazpro.model.ActividadParaContinuar?>
 
+    @androidx.room.Update
+    suspend fun actualizar(actividad: ActividadEntity): Int
+
     @Insert
     suspend fun insertar(
         actividad: ActividadEntity

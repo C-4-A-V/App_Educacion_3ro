@@ -52,11 +52,17 @@ class RespuestaAulaApiTest {
             "Historia", "Número", "Planta", "Suma", 0, 3, "Es una historia", "Piensa en un relato")));
         publicaciones.save(new PublicacionActividad(java.util.UUID.randomUUID().toString(), actividad));
         long antes = intentos.count();
+        String catalogo = identidad.findById(1L).orElseThrow().getIdentificador();
+        var detalle = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + puerto +
+            "/api/aula/actividades/" + actividad.getId() + "?cursoId=" + curso))
+            .header("X-Catalogo-Id", catalogo).GET().build();
+        assertTrue(cliente.send(detalle, HttpResponse.BodyHandlers.ofString()).body().contains("\"yaRespondida\":false"));
         String token = "11111111-1111-1111-1111-111111111111";
         assertEquals(204, estado(curso, actividad.getId(), token).statusCode());
         var primero = responder(curso, actividad.getId(), token, 1, 1);
         assertEquals(200, primero.statusCode());
         assertTrue(primero.body().contains("\"correcta\":false"));
+        assertTrue(cliente.send(detalle, HttpResponse.BodyHandlers.ofString()).body().contains("\"yaRespondida\":true"));
         assertTrue(primero.body().contains("\"finalizada\":false"));
         assertFalse(primero.body().contains("Es una historia"));
         var recuperado = estado(curso, actividad.getId(), token);

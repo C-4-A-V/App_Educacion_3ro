@@ -11,6 +11,7 @@ enum class EstadoPublicacionDocente { SOLO_LOCAL, PENDIENTE, COMPARTIDA, OTRO_VI
 data class ActividadesDocenteUiState(
     val curso: CursoEntity? = null,
     val actividades: List<ActividadEntity> = emptyList(),
+    val respondidasLocales: Set<Long> = emptySet(),
     val publicaciones: Map<Long, EstadoPublicacionDocente> = emptyMap(),
     val preguntasServidor: List<com.example.mpazpro.data.remote.ActividadRemotaEstudiante> = emptyList(),
     val idsPublicadosLocales: Set<Long> = emptySet(),
@@ -26,6 +27,7 @@ data class ActividadesDocenteUiState(
     val preparandoBanco: Boolean = false,
     val compartiendoPendientes: Boolean = false,
     val retirando: Boolean = false,
+    val guardandoEdicion: Boolean = false,
     val avisoPublicacion: String? = null,
     val cargando: Boolean = true,
     val mensaje: String? = null

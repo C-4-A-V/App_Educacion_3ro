@@ -7,6 +7,7 @@ import com.example.mpazpro.data.local.BancoActividades
 import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.local.PublicacionPendienteEntity
 import java.util.UUID
+import kotlinx.coroutines.sync.withLock
 import com.example.mpazpro.model.ActividadFormulario
 import com.example.mpazpro.model.Asignatura
 import com.example.mpazpro.validation.ActividadValidator
@@ -105,6 +106,46 @@ class ActividadRepository(
             preparadas++
         }
         preparadas
+    }
+
+    /** Verifica en el servidor que la clave nunca se publicó antes de cambiar su contenido. */
+    suspend fun editarNoCompartida(
+        actividadId: Long, cursoId: Long, asignaturaId: String, docenteId: Long,
+        formulario: ActividadFormulario,
+        catalogoApi: com.example.mpazpro.data.remote.ActividadesServidorApi = com.example.mpazpro.data.remote.ServicioActividadesServidor.api,
+        estadoApi: com.example.mpazpro.data.remote.EstadoPublicacionApi = com.example.mpazpro.data.remote.ServicioEstadoPublicacion.api
+    ) = BloqueoPublicacion.mutex.withLock {
+        val datos = formulario.normalizado()
+        require(ActividadValidator.validar(datos) == null) { "Revisa los datos de la pregunta" }
+        val original = requireNotNull(database.actividadDao().buscarPorIdYDocente(actividadId, docenteId))
+        require(original.cursoId == cursoId && original.asignaturaId == asignaturaId)
+        check(!database.actividadRetiradaDao().existe(actividadId))
+        check(!database.intentoActividadDao().tieneIntentos(actividadId)) { "La pregunta ya tiene respuestas" }
+        val publicacion = database.publicacionPendienteDao().buscar(actividadId)
+        if (publicacion != null) {
+            check(publicacion.actividadServidorId == null) { "La pregunta ya fue compartida" }
+            val vinculo = requireNotNull(database.vinculoCursoDao().buscar(cursoId))
+            check(vinculo.catalogoId == publicacion.catalogoId && vinculo.cursoServidorId == publicacion.cursoServidorId)
+            val identidad = catalogoApi.identidadCatalogo()
+            check(identidad.persistente && identidad.identificador == publicacion.catalogoId)
+            val estado = estadoApi.estadoClave(
+                publicacion.catalogoId, publicacion.clavePublicacion
+            )
+            check(!estado.publicada && !estado.retirada) { "La pregunta ya fue compartida o retirada" }
+        }
+        database.withTransaction {
+            check(database.actividadDao().buscarPorIdYDocente(actividadId, docenteId) == original)
+            check(database.publicacionPendienteDao().buscar(actividadId) == publicacion)
+            check(!database.actividadRetiradaDao().existe(actividadId))
+            check(!database.intentoActividadDao().tieneIntentos(actividadId))
+            check(database.actividadDao().actualizar(original.copy(
+                titulo = datos.titulo, instrucciones = datos.instrucciones, pregunta = datos.pregunta,
+                alternativaA = datos.alternativas[0], alternativaB = datos.alternativas[1],
+                alternativaC = datos.alternativas[2], alternativaD = datos.alternativas[3],
+                respuestaCorrecta = datos.respuestaCorrecta, maxIntentos = datos.maxIntentos,
+                explicacion = datos.explicacion, pista = datos.pista
+            )) == 1)
+        }
     }
 
     suspend fun crearActividad(

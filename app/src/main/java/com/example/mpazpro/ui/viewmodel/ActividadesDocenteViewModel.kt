@@ -49,6 +49,30 @@ class ActividadesDocenteViewModel(
     private var observacionJob: Job? = null
     private var consultaServidorJob: Job? = null
 
+    fun editarPregunta(id: Long, formulario: com.example.mpazpro.model.ActividadFormulario, alTerminar: () -> Unit) {
+        val actual = contexto ?: return
+        val estado = _uiState.value
+        if (estado.guardandoEdicion || estado.retirando || estado.publicandoId != null ||
+            estado.compartiendoPendientes || estado.enviandoOtroCurso) return
+        _uiState.update { it.copy(guardandoEdicion = true, avisoPublicacion = null) }
+        viewModelScope.launch {
+            try {
+                actividades.editarNoCompartida(id, actual.first, actual.second, actual.third, formulario)
+                if (contexto == actual) {
+                    _uiState.update { it.copy(avisoPublicacion = "Pregunta actualizada en este curso.") }
+                    alTerminar()
+                }
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                if (contexto == actual) _uiState.update {
+                    it.copy(avisoPublicacion = "No se pudo editar. Comprueba la conexión y que la pregunta no esté compartida ni respondida.")
+                }
+            } finally {
+                if (contexto == actual) _uiState.update { it.copy(guardandoEdicion = false) }
+            }
+        }
+    }
+
     fun actualizarServidorAutomaticamente() {
         if (consultaServidorJob?.isActive != true) actualizarServidor()
     }
@@ -296,6 +320,12 @@ class ActividadesDocenteViewModel(
                     }.collect { destinos ->
                         if (contexto == nuevoContexto) _uiState.update { it.copy(cursosDestino = destinos) }
                     }
+                }
+                launch {
+                    database.intentoActividadDao().observarIdsRespondidas(cursoId, asignaturaId, docenteId)
+                        .collect { ids ->
+                            if (contexto == nuevoContexto) _uiState.update { it.copy(respondidasLocales = ids.toSet()) }
+                        }
                 }
                 var ultimoVinculo: Pair<String, Long>? = null
                 combine(

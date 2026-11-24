@@ -36,7 +36,12 @@ class PublicacionActividadApiTest {
             """.formatted(curso);
         String clave = "4abf76c2-347b-4b76-9910-fcb0aff16774";
         long antes = actividades.count();
+        var estadoClave = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + puerto +
+            "/api/publicaciones/" + clave + "/estado"))
+            .header("X-Catalogo-Id", identidades.findById(1L).orElseThrow().getIdentificador()).GET().build();
+        assertTrue(cliente.send(estadoClave, HttpResponse.BodyHandlers.ofString()).body().contains("\"publicada\":false"));
         var primera = publicar(clave, datos);
+        assertTrue(cliente.send(estadoClave, HttpResponse.BodyHandlers.ofString()).body().contains("\"publicada\":true"));
         var repetida = publicar(clave, datos);
         assertEquals(201, primera.statusCode());
         assertEquals(200, repetida.statusCode());

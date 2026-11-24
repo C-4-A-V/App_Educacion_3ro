@@ -11,16 +11,21 @@ public record ActividadParaEstudiante(
     String alternativaC,
     String alternativaD,
     Integer maxIntentos,
-    String pista
+    String pista,
+    boolean yaRespondida
 ) {
     public static ActividadParaEstudiante desde(ActividadCompleta actividad) {
+        return desde(actividad, false);
+    }
+
+    public static ActividadParaEstudiante desde(ActividadCompleta actividad, boolean yaRespondida) {
         return new ActividadParaEstudiante(
             actividad.getId(), actividad.getAsignaturaId(), actividad.getTitulo(),
             actividad.getInstrucciones(), actividad.getPregunta(),
             actividad.getAlternativaA(), actividad.getAlternativaB(),
             actividad.getAlternativaC(), actividad.getAlternativaD(),
             actividad.getMaxIntentos(),
-            actividad.getMaxIntentos() == 3 ? actividad.getPista() : ""
+            actividad.getMaxIntentos() == 3 ? actividad.getPista() : "", yaRespondida
         );
     }
 }

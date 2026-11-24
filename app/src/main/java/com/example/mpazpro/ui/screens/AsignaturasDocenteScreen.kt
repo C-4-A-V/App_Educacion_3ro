@@ -91,17 +91,6 @@ fun AsignaturasDocenteScreen(
                 )
             }
 
-            if (mostrarBanco && estado.vinculado) {
-                item {
-                    OutlinedButton(onClick = cursoViewModel::prepararBanco, enabled = !estado.preparandoBanco) {
-                        Text(if (estado.preparandoBanco) "Preparando…" else "Preparar banco completo")
-                    }
-                    Text("Deja listas las preguntas del banco para elegir cuáles compartir.",
-                        style = MaterialTheme.typography.bodySmall)
-                    estado.avisoBanco?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                }
-            }
-
             Asignatura.entries.forEach { asignatura ->
                 item(key = asignatura.id) {
                     Card(

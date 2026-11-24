@@ -14,10 +14,29 @@ import org.springframework.web.server.ResponseStatusException;
 public class PublicacionActividadController {
     private final PublicacionActividadService servicio;
     private final IdentidadCatalogoRepository identidades;
+    private final PublicacionActividadRepository publicaciones;
+    private final PublicacionRetiradaRepository retiradas;
 
-    public PublicacionActividadController(PublicacionActividadService servicio, IdentidadCatalogoRepository identidades) {
+    public PublicacionActividadController(PublicacionActividadService servicio, IdentidadCatalogoRepository identidades,
+                                          PublicacionActividadRepository publicaciones, PublicacionRetiradaRepository retiradas) {
         this.servicio = servicio;
         this.identidades = identidades;
+        this.publicaciones = publicaciones;
+        this.retiradas = retiradas;
+    }
+
+    public record EstadoClave(boolean publicada, boolean retirada) {}
+
+    @GetMapping("/{clave}/estado")
+    public EstadoClave estado(@RequestHeader("X-Catalogo-Id") String catalogoId, @PathVariable String clave) {
+        if (!identidades.findById(1L).orElseThrow().getIdentificador().equals(catalogoId))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Catálogo incorrecto");
+        try {
+            if (!java.util.UUID.fromString(clave).toString().equals(clave)) throw new IllegalArgumentException();
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clave inválida");
+        }
+        return new EstadoClave(publicaciones.existsById(clave), retiradas.existsById(clave));
     }
 
     public record RetirarSolicitud(Long cursoId, java.util.List<String> claves) {}

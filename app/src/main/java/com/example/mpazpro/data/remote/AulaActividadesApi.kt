@@ -22,7 +22,8 @@ data class ActividadRemotaEstudiante(
     @SerializedName("alternativaC") val alternativaC: String,
     @SerializedName("alternativaD") val alternativaD: String,
     @SerializedName("maxIntentos") val maxIntentos: Int,
-    @SerializedName("pista") val pista: String
+    @SerializedName("pista") val pista: String,
+    @SerializedName("yaRespondida") val yaRespondida: Boolean = false
 )
 
 data class SolicitudRespuestaAula(

@@ -379,11 +379,6 @@ fun ActividadesServidorScreen(docenteId: Long, onVolver: () -> Unit, modelo: Act
                             modelo.vincularCurso(propuesta)
                         }
                         if (propuesta.estado == "vinculado") {
-                            OutlinedButton(
-                                onClick = { modelo.prepararBanco(docenteId, propuesta.localId) },
-                                enabled = !modelo.enviandoPendientes
-                            ) { Text("Preparar preguntas del banco") }
-                            Text("Prepara las preguntas existentes para enviarlas después.")
                             Text("Consultar preguntas enviadas:")
                             listOf(listOf("lenguaje", "matematica"), listOf("ciencias", "historia")).forEach { fila ->
                                 Row {

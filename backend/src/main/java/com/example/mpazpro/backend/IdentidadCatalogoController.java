@@ -18,7 +18,7 @@ public class IdentidadCatalogoController {
 
     @GetMapping("/api/catalogo/identidad")
     public Respuesta identidad() {
-        boolean persistente = urlBase.startsWith("jdbc:h2:file:") || urlBase.startsWith("jdbc:postgresql:");
+        boolean persistente = urlBase.startsWith("jdbc:h2:file:") || urlBase.startsWith("jdbc:postgresql:") || urlBase.startsWith("jdbc:mysql:");
         return new Respuesta(repositorio.findById(1L).orElseThrow().getIdentificador(), persistente);
     }
 }

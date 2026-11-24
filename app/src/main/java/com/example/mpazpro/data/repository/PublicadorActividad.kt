@@ -5,6 +5,10 @@ import com.example.mpazpro.data.local.MpazDatabase
 import com.example.mpazpro.data.remote.ActividadesServidorApi
 import com.example.mpazpro.data.remote.PublicacionesApi
 import com.example.mpazpro.data.remote.SolicitudPublicacion
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+internal object BloqueoPublicacion { val mutex = Mutex() }
 
 /** Publica una actividad ya guardada; cualquier error mantiene su registro pendiente. */
 class PublicadorActividad(
@@ -34,7 +38,10 @@ class PublicadorActividad(
         }
     }
 
-    suspend fun publicar(actividadId: Long, docenteId: Long): Long {
+    suspend fun publicar(actividadId: Long, docenteId: Long): Long =
+        BloqueoPublicacion.mutex.withLock { publicarSinBloqueo(actividadId, docenteId) }
+
+    private suspend fun publicarSinBloqueo(actividadId: Long, docenteId: Long): Long {
         check(!database.actividadRetiradaDao().existe(actividadId)) { "La actividad fue retirada" }
         val pendiente = database.publicacionPendienteDao().buscar(actividadId)
             ?: throw IllegalArgumentException("No hay publicación pendiente")
