@@ -166,7 +166,7 @@ fun AsignaturaScreen(
             estado.mensaje == null &&
             estado.actividades.isEmpty() &&
             estado.actividadesCompartidas.isEmpty() &&
-            !estado.cargandoCompartidas
+            !estado.cargandoCompartidas && !estado.errorCompartidas && !estado.aulaNoDisponible
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
@@ -192,6 +192,11 @@ fun AsignaturaScreen(
 
         if (estado.cargandoCompartidas) {
             item(span = { GridItemSpan(maxLineSpan) }) { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        }
+        if (estado.aulaNoDisponible) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text("Las preguntas compartidas no están disponibles en esta versión.")
+            }
         }
         if (estado.errorCompartidas) {
             item(span = { GridItemSpan(maxLineSpan) }) {

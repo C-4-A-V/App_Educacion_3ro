@@ -45,8 +45,8 @@ class CursosViewModel(
     }
 
     fun actualizarDesdePanel() {
-        if (!esDepuracion) {
-            _uiState.update { it.copy(avisoActualizacion = "La actualización de cursos está disponible en la versión de prueba. Los estudiantes y resultados aún no se sincronizan entre dispositivos.") }
+        if (!esDepuracion || com.example.mpazpro.data.repository.SesionDocenteRemota.repository.sesion.value != null) {
+            _uiState.update { it.copy(avisoActualizacion = "La sincronización de cursos, estudiantes y resultados con esta cuenta aún no está disponible.") }
             return
         }
         if (docenteActualId == null || _uiState.value.cargando || _uiState.value.actualizandoManual) return
@@ -67,7 +67,8 @@ class CursosViewModel(
     }
 
     fun revisarConexiones() {
-        if (!esDepuracion) return
+        // El servicio de prueba vincula por nombre y no conoce la cuenta autenticada.
+        if (!esDepuracion || com.example.mpazpro.data.repository.SesionDocenteRemota.repository.sesion.value != null) return
         val docenteId = docenteActualId ?: return
         if (conexionJob?.isActive == true) {
             conexionSolicitada = true
@@ -185,7 +186,7 @@ class CursosViewModel(
         viewModelScope.launch {
             try {
                 repository.crearSiguiente(docenteId, seccionConfirmada)
-                _uiState.update { it.copy(guardando = false, mensaje = "Se creó 3.º Básico $seccionConfirmada.") }
+                _uiState.update { it.copy(guardando = false, mensaje = "Se creó 3.º Básico $seccionConfirmada en este dispositivo; todavía no se sincroniza.") }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (_: Exception) {

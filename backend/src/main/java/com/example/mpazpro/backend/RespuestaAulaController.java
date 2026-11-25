@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 // Solo para el aula local de prueba: el token no sustituye una autenticación real.
-@Profile("aula-local")
+@Profile("aula-local & !aula-autenticada")
 @RestController
 @RequestMapping("/api/aula/respuestas")
 public class RespuestaAulaController {

@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IntentoAulaRepository extends JpaRepository<IntentoAula, Long> {
     boolean existsByActividadId(Long actividadId);
+    long countByActividad_IdAndFinalizadaTrue(Long actividadId);
+    long countByActividad_IdAndFinalizadaTrueAndCorrectaTrue(Long actividadId);
     boolean existsByEstudianteToken(String estudianteToken);
     long countByEstudianteTokenAndActividad_CursoIdNot(String estudianteToken, Long cursoId);
 

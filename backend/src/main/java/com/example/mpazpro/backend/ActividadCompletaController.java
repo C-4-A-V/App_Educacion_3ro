@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 // Solo para pruebas aisladas: aún no existe autorización por curso ni sesión autenticada.
-@Profile("prototipo-inseguro")
+@Profile("prototipo-inseguro & !aula-autenticada")
 @RestController
 @RequestMapping("/api/actividades-completas")
 public class ActividadCompletaController {

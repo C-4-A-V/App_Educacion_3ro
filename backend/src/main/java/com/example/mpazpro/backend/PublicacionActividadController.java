@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 // Acceso limitado a la prueba local; falta autenticación para uso compartido real.
-@Profile({"prototipo-inseguro", "aula-local"})
+@Profile("(prototipo-inseguro | aula-local) & !aula-autenticada")
 @RestController
 @RequestMapping("/api/publicaciones")
 public class PublicacionActividadController {

@@ -54,6 +54,46 @@ fun LoginDocenteScreen(
     // Observa el estado y actualiza la interfaz cuando cambia.
     val estado by loginViewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var correoAnterior by rememberSaveable { mutableStateOf("") }
+    var claveAnterior by androidx.compose.runtime.remember { mutableStateOf("") }
+
+    if (estado.recuperacionNecesaria) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { if (!estado.cargando) loginViewModel.cerrarSesionRemota() },
+            title = { Text("Recuperar mis datos guardados") },
+            text = {
+                Column {
+                    Text("Ya existe un perfil en este dispositivo. Confirma sus credenciales para recuperar sus datos.")
+                    OutlinedTextField(
+                        value = correoAnterior, onValueChange = { correoAnterior = it },
+                        label = { Text("Correo anterior") }, singleLine = true, enabled = !estado.cargando
+                    )
+                    OutlinedTextField(
+                        value = claveAnterior, onValueChange = { claveAnterior = it },
+                        label = { Text("Contraseña anterior") }, singleLine = true,
+                        enabled = !estado.cargando, visualTransformation = PasswordVisualTransformation()
+                    )
+                    estado.mensaje?.let { Text(it) }
+                    if (estado.cargando) LinearProgressIndicator()
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    enabled = !estado.cargando,
+                    onClick = {
+                        loginViewModel.recuperarDatos(correoAnterior, claveAnterior)
+                        claveAnterior = ""
+                    }
+                ) { Text("Recuperar") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    enabled = !estado.cargando,
+                    onClick = { claveAnterior = ""; loginViewModel.cerrarSesionRemota() }
+                ) { Text("Cancelar") }
+            }
+        )
+    }
 
     // La navegación ocurre como efecto del resultado del acceso.
     LaunchedEffect(estado.docente) {
@@ -142,6 +182,18 @@ fun LoginDocenteScreen(
                 .fillMaxWidth()
         )
 
+        androidx.compose.foundation.layout.Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            androidx.compose.material3.Checkbox(
+                checked = estado.recuperarAnterior,
+                onCheckedChange = loginViewModel::solicitarRecuperacion,
+                enabled = !estado.cargando
+            )
+            Text("Recuperar datos guardados en este dispositivo")
+        }
+
         if (estado.cargando) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -151,7 +203,7 @@ fun LoginDocenteScreen(
         }
 
         Button(
-            onClick = loginViewModel::iniciarSesion,
+            onClick = loginViewModel::iniciarSesionRemota,
             enabled = !estado.cargando,
             modifier = Modifier
                 .padding(top = 20.dp)

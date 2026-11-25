@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // Datos ficticios y ejecución local únicamente hasta contar con autenticación.
-@Profile("aula-local")
+@Profile("aula-local & !aula-autenticada")
 @RestController
 @RequestMapping("/api/aula/actividades")
 public class AulaActividadesController {

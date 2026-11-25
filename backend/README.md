@@ -2,6 +2,34 @@
 
 Proyecto Spring Boot independiente de Android. La versión de depuración permite conectar cursos, compartir preguntas confirmadas y recibir respuestas de prueba. La sincronización de estudiantes y resultados entre dispositivos, y la autenticación del servidor, todavía no están terminadas.
 
+## Estado de autenticación y resultados
+
+El perfil `sesion-prueba` dispone de sesiones de estudiante y consulta por el curso asociado a la identidad del servidor. El progreso de prueba cuenta solo publicaciones activas y el último intento finalizado de cada actividad; un reenvío idéntico no aumenta el avance ni las estrellas. Las respuestas de actividades retiradas se conservan en el historial.
+
+La sesión de estudiante de prueba aún no está conectada a las pantallas Android de entrega. El perfil `aula-autenticada` incluye ahora una API docente separada, descrita más abajo. `aula-local` y `sesion-prueba` son perfiles experimentales locales y no deben exponerse como servicio de entrega.
+
+La prueba `ActividadesSesionPruebaTest` comprueba separación de cursos y estudiantes, reenvío, reintento, progreso y retiro en H2 en memoria. Se ejecuta desde la raíz:
+
+```powershell
+.\gradlew.bat -p backend '-Dorg.gradle.java.home=C:\Program Files\Android\Android Studio\jbr' test --tests 'com.example.mpazpro.backend.ActividadesSesionPruebaTest'
+```
+
+## API docente autenticada
+
+El perfil `aula-autenticada` expone una API separada. Las rutas antiguas de cursos, publicaciones y aula local quedan desactivadas cuando este perfil está activo. Android todavía no usa esta API y no debe considerarse lista para despliegue.
+
+- `POST /api/docentes/sesion/registro`: `{"correo":"docente@ejemplo.cl","clave":"una-clave-de-10-o-mas"}`.
+- `POST /api/docentes/sesion/login`: mismo cuerpo. Devuelve una cookie de sesión.
+- `GET /api/docentes/sesion` y `POST /api/docentes/sesion/logout`: consultar o cerrar la sesión.
+- `GET /api/docentes/cursos` y `POST /api/docentes/cursos` con `{"seccion":"B"}`: listar cursos asignados y crear uno nuevo.
+- `POST /api/docentes/cursos/{cursoId}/publicaciones`: recibe el cuerpo de actividad completa y la cabecera `Idempotency-Key` con UUID.
+- `POST /api/docentes/cursos/{cursoId}/publicaciones/retirar`: recibe una lista JSON de claves.
+- `GET /api/docentes/cursos/{cursoId}/actividades/{actividadId}/resultados`: resumen de finalizadas y correctas.
+
+Las operaciones de curso usan la identidad de la sesión. Un curso existente no se asigna al registrarse ni puede reclamarse por HTTP. Para la transición, una persona administradora con acceso a la base debe verificar manualmente la pertenencia y ejecutar la tarea local explícita `asignarCursoLocal --args="correo seccion"` con las variables MySQL configuradas; esta operación no crea cursos ni cuentas y es idempotente. No se ha ejecutado sobre los datos existentes.
+
+Las contraseñas docentes se derivan con PBKDF2-HMAC-SHA256 y salt aleatorio. El límite de intentos es local al proceso y la sesión usa memoria del servidor: antes de exponerlo hay que completar HTTPS, cookies seguras y protección adecuada para despliegue. Los resultados de la API docente son agregados; el informe detallado y la integración Android siguen pendientes.
+
 ## Requisitos
 
 - JDK 25 (por ejemplo, el que viene con Android Studio).

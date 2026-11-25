@@ -52,7 +52,7 @@ class ActividadesEstudianteViewModel(
         observacionJob?.cancel()
         consultaAulaJob?.cancel()
         contexto = nuevoContexto
-        _uiState.value = ActividadesEstudianteUiState()
+        _uiState.value = ActividadesEstudianteUiState(aulaNoDisponible = !esDepuracion)
         if (esDepuracion) actualizarCompartidas()
 
         observacionJob = viewModelScope.launch {

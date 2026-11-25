@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@org.springframework.context.annotation.Profile("!aula-autenticada")
 @RestController
 public class ActividadController {
     private final ActividadRepository repository;

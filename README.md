@@ -6,15 +6,15 @@ Proyecto académico de **DSY1105: Desarrollo de Aplicaciones Móviles**, Duoc UC
 
 ## Equipo y seguimiento
 
-- Camilo Alejandro Alegría Vargas: identidad presente en el historial de Git.
-- Javier / jav-rgb: identidad presente en el historial de Git; confirmar nombre completo antes de entregar.
-- Número de grupo: pendiente de confirmación del equipo.
+- Grupo 4.
+- Camilo Alejandro Alegría Vargas.
+- Javier Ignacio Alegría Vargas.
 - Repositorio configurado: [App_Educacion_3ro](https://github.com/C-4-A-V/App_Educacion_3ro).
 - Tablero Trello: pendiente de proporcionar el enlace.
 - [Planificación para trasladar al tablero](docs/PLANIFICACION.md).
 - [Cumplimiento técnico y evidencias pendientes](docs/CUMPLIMIENTO_GUIAS_DSY1105.md).
 
-El registro de autores de Git no sustituye la confirmación de los integrantes ni las evidencias reales de colaboración.
+El historial de Git registra cambios del proyecto; las evidencias de colaboración se incorporarán cuando estén disponibles.
 
 ## Funcionalidades
 
@@ -50,8 +50,8 @@ El registro de autores de Git no sustituye la confirmación de los integrantes n
 3. Instalar Android SDK **API 37** desde SDK Manager y aceptar sus licencias.
 4. Sincronizar Gradle. Las dependencias se administran en gradle/libs.versions.toml.
 5. Seleccionar el módulo app y un teléfono o emulador Android **API 26 o superior**.
-6. Pulsar Run. En una instalación nueva se preparan la cuenta y las actividades de demostración.
-7. Abrir “Ingresar como docente”. Desde el panel se pueden crear estudiantes en el curso para probar su área.
+6. Configurar y ejecutar el backend de prueba según `backend/README.md` y pulsar Run.
+7. Abrir “Ingresar como docente”; el registro y el ingreso actuales requieren conexión con Spring. La sincronización autenticada de cursos, estudiantes, actividades y resultados aún está pendiente.
 
 Para cámara y galería, probar también en un teléfono físico. La captura pide permiso de cámara porque la app lo declara; el selector de galería concede acceso al archivo elegido sin requerir lectura de toda la biblioteca.
 
@@ -67,7 +67,7 @@ Para cámara y galería, probar también en un teléfono físico. La captura pid
 
 La carga no modifica la contraseña de una cuenta Milo existente. Si ya tiene cursos, se utiliza el primero por ID. Las preguntas se agregan solo cuando no existe una actividad con el mismo curso, asignatura y título; no se borran actividades, estudiantes ni resultados.
 
-Son credenciales ficticias de demostración, no una cuenta externa ni un sistema de autenticación en la nube. El docente configura el RUT y PIN de cada estudiante; los perfiles anteriores quedan pendientes de configurar y conservan sus avances. El estudiante accede con RUT y PIN, que puede mostrar u ocultar.
+Son credenciales ficticias de demostración para datos locales anteriores: no crean una cuenta en Spring y no permiten por sí solas ingresar al formulario conectado. Para recuperar esos datos se necesita una cuenta registrada en Spring y confirmar las credenciales del perfil anterior. El docente configura el RUT y PIN de cada estudiante; los perfiles anteriores quedan pendientes de configurar y conservan sus avances. El estudiante accede con RUT y PIN, que puede mostrar u ocultar.
 
 El banco es contenido original orientado al nivel escolar. El docente puede revisar su pertinencia; no se presenta como material certificado por MINEDUC.
 
@@ -82,7 +82,7 @@ El banco es contenido original orientado al nivel escolar. El docente puede revi
 - Los envíos repetidos con el mismo número esperado no consumen otra oportunidad.
 - Se requieren cuatro alternativas distintas y una respuesta correcta válida.
 - Las fotografías importadas tienen un límite de 10 MB y se comprueba que tengan dimensiones de imagen válidas.
-- La sesión docente es local y vuelve a requerir acceso tras recrear el proceso; las contraseñas no se guardan en SavedStateHandle.
+- La sesión docente autenticada se mantiene en memoria y requiere un nuevo acceso tras recrear el proceso; las contraseñas no se guardan en SavedStateHandle.
 - El perfil estudiantil seleccionado y el borrador de actividades se restauran con SavedStateHandle; la base de datos conserva las respuestas.
 
 ## Arquitectura
@@ -97,9 +97,15 @@ El banco es contenido original orientado al nivel escolar. El docente puede revi
 | data/media | Importación privada y archivos temporales de imágenes |
 | navigation | Rutas reutilizables y NavHost |
 
-Room usa actualmente el esquema 15 con migraciones explícitas; la migración 14→15 registra las copias entre cursos sin borrar actividades ni respuestas; la migración 13→14 agrega el estado de retiro del estudiante sin borrar perfiles ni avances; la migración 12→13 agrega un registro de preguntas retiradas sin borrar actividades ni respuestas; la migración 9→10 agrega mensajes docentes sin borrar los datos existentes; la migración 8→9 conserva los perfiles y avances existentes y deja pendiente la configuración de RUT y PIN. El RUT se guarda localmente y el PIN se almacena con hash y salt; este mecanismo local no equivale a autenticación remota segura. Después de cinco intentos incorrectos se bloquea el acceso durante un minuto, o el docente puede restablecerlo. Además, no se borra la base de datos como mecanismo de actualización. La migración 7→8 agrega pistas sin borrar preguntas ni intentos: usa ayudas específicas para el banco conocido y estrategias generales por asignatura para preguntas personalizadas existentes, revisables por el docente. DataStore guarda la preferencia de lectura y la apariencia del docente por cuenta local, separadas de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
+Room usa actualmente el esquema 16 con migraciones explícitas; la migración 15→16 conserva los datos y añade la asociación entre catálogo, cuenta docente del servidor y perfil local. El primer ingreso crea un perfil de apoyo sin credencial local y no reclama perfiles anteriores por correo. Si el correo ya existe en el dispositivo, la recuperación exige confirmar las credenciales de ese perfil y una sesión del servidor. Los cursos todavía no se sincronizan mediante la API autenticada; la migración 14→15 registra las copias entre cursos sin borrar actividades ni respuestas; la migración 13→14 agrega el estado de retiro del estudiante sin borrar perfiles ni avances; la migración 12→13 agrega un registro de preguntas retiradas sin borrar actividades ni respuestas; la migración 9→10 agrega mensajes docentes sin borrar los datos existentes; la migración 8→9 conserva los perfiles y avances existentes y deja pendiente la configuración de RUT y PIN. El RUT se guarda localmente y el PIN se almacena con hash y salt; este mecanismo local no equivale a autenticación remota segura. Después de cinco intentos incorrectos se bloquea el acceso durante un minuto, o el docente puede restablecerlo. Además, no se borra la base de datos como mecanismo de actualización. La migración 7→8 agrega pistas sin borrar preguntas ni intentos: usa ayudas específicas para el banco conocido y estrategias generales por asignatura para preguntas personalizadas existentes, revisables por el docente. DataStore guarda la preferencia de lectura y la apariencia del docente por cuenta local, separadas de las entidades académicas. Los datos se guardan en este dispositivo; no hay sincronización entre teléfonos.
 
 ## Pruebas
+
+En la comprobación del 24 de noviembre de 2026 se usó un teléfono conectado y Spring con el perfil `aula-autenticada` y un catálogo H2 de prueba separado. Se comprobó desde MainActivity el acceso de una cuenta ficticia, el rechazo de una contraseña incorrecta, la recuperación explícita de un perfil anterior con un curso y la vuelta al panel. También se comprobó que, después de cerrar sesión y recrear la Activity, la cuenta vuelve a abrir su curso guardado; al ingresar con otra cuenta ficticia, esta mostró cero cursos y no mostró la cuenta anterior.
+
+La primera prueba de MainActivity no encontraba la jerarquía Compose con el teléfono en reposo. Con el teléfono activo, Logcat mostró que MainActivity se iniciaba y Compose estaba presente; otra ejecución dejó ver que el teclado cubría parcialmente el botón y el segundo ingreso no se había enviado. La prueba cierra el teclado y desplaza la lista hasta «Cerrar sesión». No se observó una excepción fatal de la app en esas ejecuciones. Esto no demuestra que todas las posibles causas de ausencia de jerarquía estén resueltas.
+
+Las pruebas crearon perfiles y cursos ficticios en el teléfono y un catálogo aislado en `backend/build/prueba_identidad_20261124`; no se eliminaron después.
 
 En PowerShell desde la raíz:
 

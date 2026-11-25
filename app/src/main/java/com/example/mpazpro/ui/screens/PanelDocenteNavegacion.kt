@@ -50,7 +50,8 @@ fun PanelDocenteScreen(
     onAbrirServidor: (() -> Unit)? = null,
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
-    cursosViewModel: CursosViewModel = viewModel()
+    cursosViewModel: CursosViewModel = viewModel(),
+    correoCuenta: String? = null
 ) {
     DocenteTheme {
     val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
@@ -102,7 +103,7 @@ fun PanelDocenteScreen(
             PanelDocenteContenido(
                 docente, onCerrarSesion, onAbrirCurso, onAbrirActividades,
                 onAbrirPerfil, onAbrirResultados, fotoRuta,
-                Modifier.padding(padding), cursosViewModel, onAbrirServidor
+                Modifier.padding(padding), cursosViewModel, onAbrirServidor, correoCuenta
             )
         }
     }

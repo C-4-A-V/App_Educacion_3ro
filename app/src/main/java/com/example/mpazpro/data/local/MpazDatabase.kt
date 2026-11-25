@@ -18,14 +18,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         VinculoCursoEntity::class,
         PublicacionPendienteEntity::class,
         ActividadRetiradaEntity::class,
-        ActividadCopiaEntity::class
+        ActividadCopiaEntity::class,
+        IdentidadDocenteEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
 
     abstract fun docenteDao(): DocenteDao
+
+    abstract fun identidadDocenteDao(): IdentidadDocenteDao
 
     abstract fun cursoDao(): CursoDao
 
@@ -301,6 +304,17 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS identidades_docentes (
+                    catalogoId TEXT NOT NULL, docenteServidorId INTEGER NOT NULL, docenteLocalId INTEGER NOT NULL,
+                    PRIMARY KEY(catalogoId, docenteServidorId),
+                    FOREIGN KEY(docenteLocalId) REFERENCES docentes(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_identidades_docentes_docenteLocalId ON identidades_docentes(docenteLocalId)")
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -323,6 +337,7 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_12_13,
                         MIGRATION_13_14,
                         MIGRATION_14_15,
+                        MIGRATION_15_16,
                     )
                     .build()
                     .also { instancia = it }

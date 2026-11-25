@@ -65,6 +65,31 @@ class RegistroDocenteViewModel(
         }
     }
 
+    fun registrarRemoto() {
+        val actual = _uiState.value
+        if (actual.guardando || actual.registrado) return
+        val errores = RegistroDocenteValidator.validar(actual)
+        val ajustados = if (actual.clave.length < 10)
+            errores.copy(clave = "Usa al menos 10 caracteres para el servidor") else errores
+        _uiState.update { it.copy(errores = ajustados, intentoValidar = true, mensaje = null) }
+        if (listOf(ajustados.nombre, ajustados.correo, ajustados.clave, ajustados.confirmacion).any { it != null }) return
+        _uiState.update { it.copy(guardando = true) }
+        viewModelScope.launch {
+            try {
+                com.example.mpazpro.data.repository.SesionDocenteRemota.repository.registrar(actual.correo, actual.clave)
+                _uiState.update { it.copy(guardando = false, registrado = true, clave = "", confirmacion = "",
+                    mensaje = "Cuenta creada en el servidor. Ahora inicia sesión.") }
+            } catch (e: CancellationException) { throw e }
+            catch (e: com.example.mpazpro.data.repository.OperacionDocenteRechazada) {
+                _uiState.update { it.copy(guardando = false, clave = "", confirmacion = "",
+                    mensaje = if (e.codigo == 409) "Este correo ya está registrado en el servidor." else "El servidor rechazó el registro.") }
+            } catch (_: Exception) {
+                _uiState.update { it.copy(guardando = false, clave = "", confirmacion = "",
+                    mensaje = "No pudimos conectar con el servidor.") }
+            }
+        }
+    }
+
     fun registrar() {
         val actual = _uiState.value
 

@@ -67,6 +67,7 @@ fun RegistroDocenteScreen(
         ) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Crear cuenta docente", style = MaterialTheme.typography.titleLarge)
+        Text("El servidor registra el correo; el nombre no se sincroniza todavía.")
 
         Text("Utiliza datos ficticios para este proyecto académico.")
 
@@ -172,7 +173,7 @@ fun RegistroDocenteScreen(
 
         if (!estado.registrado) {
             Button(
-                onClick = registroViewModel::registrar,
+                onClick = registroViewModel::registrarRemoto,
                 enabled = !estado.guardando,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {

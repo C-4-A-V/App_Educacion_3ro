@@ -31,6 +31,7 @@ data class ActividadesEstudianteUiState(
     val actividadesCompartidas: List<ActividadRemotaEstudiante> = emptyList(),
     val cargandoCompartidas: Boolean = false,
     val errorCompartidas: Boolean = false,
+    val aulaNoDisponible: Boolean = false,
     val progreso: ProgresoEstudiante = ProgresoEstudiante(),
     val cargando: Boolean = true,
     val mensaje: String? = null

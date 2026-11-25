@@ -28,4 +28,14 @@ data class DocenteEntity(
     val claveIteraciones: Int,
 
     val fotoRuta: String? = null
-)
+) {
+    /** Los tres valores vacíos representan ausencia de credencial local, no una contraseña. */
+    fun tieneCredencialLocal(): Boolean =
+        claveHash.isNotEmpty() && claveSalt.isNotEmpty() && claveIteraciones > 0
+
+    companion object {
+        fun soporteRemoto(correo: String) = DocenteEntity(
+            nombre = correo, correo = correo, claveHash = "", claveSalt = "", claveIteraciones = 0
+        )
+    }
+}

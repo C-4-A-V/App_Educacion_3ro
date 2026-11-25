@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
@@ -66,7 +67,8 @@ internal fun PanelDocenteContenido(
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel(),
-    onAbrirServidor: (() -> Unit)? = null
+    onAbrirServidor: (() -> Unit)? = null,
+    correoCuenta: String? = null
 ) {
     val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
     val densidad = LocalDensity.current
@@ -78,7 +80,7 @@ internal fun PanelDocenteContenido(
         AlertDialog(
             onDismissRequest = { if (!estado.guardando) confirmarSeccion = null },
             title = { Text("¿Crear nuevo curso?") },
-            text = { Text("Se creará 3.º Básico $seccion y se conectará automáticamente cuando el servidor esté disponible.") },
+            text = { Text("Se creará 3.º Básico $seccion en este dispositivo. Su sincronización aún no está disponible.") },
             confirmButton = {
                 TextButton(onClick = { confirmarSeccion = null; cursosViewModel.crearCurso(seccion) },
                     enabled = !estado.guardando) { Text("Crear curso") }
@@ -211,6 +213,7 @@ internal fun PanelDocenteContenido(
 
     LazyColumn(
         modifier = modifier
+            .testTag("panelDocenteLista")
             .fillMaxSize().anchoFormulario()
             .imePadding(),
 
@@ -299,6 +302,10 @@ internal fun PanelDocenteContenido(
                 titulo = "Hola, ${docente.nombre.trim().substringBefore(' ')}",
                 detalle = "Tu dedicación abre nuevas oportunidades. Acompañemos cada aprendizaje."
             )
+        }
+
+        if (correoCuenta != null) {
+            item { Text("Cuenta: $correoCuenta", style = MaterialTheme.typography.bodySmall) }
         }
 
         // Resumen del espacio docente.

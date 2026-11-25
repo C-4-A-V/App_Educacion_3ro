@@ -46,6 +46,13 @@ tasks.register<JavaExec>("altaEstudianteLocal") {
     mainClass.set("com.example.mpazpro.backend.AltaEstudianteLocalCli")
 }
 
+tasks.register<JavaExec>("asignarCursoLocal") {
+    group = "application"
+    description = "Asigna explícitamente un curso existente a un docente."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("com.example.mpazpro.backend.AsignacionCursoLocalCli")
+}
+
 springBoot {
     mainClass.set("com.example.mpazpro.backend.MpazBackendApplication")
 }

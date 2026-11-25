@@ -53,6 +53,16 @@ fun AppNavigation(
 
     val estadoLogin by loginViewModel.uiState
         .collectAsStateWithLifecycle()
+    val sesionDocente by loginViewModel.sesionRemota.collectAsStateWithLifecycle()
+    LaunchedEffect(estadoLogin.docente, sesionDocente) {
+        if (estadoLogin.docente != null && sesionDocente == null) {
+            loginViewModel.cerrarSesionRemota()
+            navController.navigate(Screen.Bienvenida.route) {
+                popUpTo(navController.graph.id) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     val accesoEstudianteViewModel: AccesoEstudianteViewModel =
         viewModel()
@@ -308,16 +318,16 @@ fun AppNavigation(
 
         composable(Screen.PanelDocente.route) {
             val docente = estadoLogin.docente
+            val remoto by loginViewModel.sesionRemota.collectAsStateWithLifecycle()
 
-            if (docente != null) {
+            if (docente != null && remoto != null) {
                 PanelDocenteScreen(
                     docente = docente,
+                    correoCuenta = remoto?.correo,
                     fotoRuta = estadoPerfil.docente
                         ?.takeIf { it.id == docente.id }
                         ?.fotoRuta,
-                    onAbrirServidor = if (esDepuracion) ({
-                        navController.navigate(Screen.ActividadesServidor.route)
-                    }) else null,
+                    onAbrirServidor = null,
                     onAbrirPerfil = {
                         navController.navigate(Screen.PerfilDocente.route) {
                             launchSingleTop = true

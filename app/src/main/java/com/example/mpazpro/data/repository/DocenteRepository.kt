@@ -73,6 +73,9 @@ class DocenteRepository(
         val docente = docenteDao.buscarPorCorreo(correoNormalizado)
             ?: return@withContext null
 
+        // Los perfiles de apoyo no permiten iniciar sesión localmente.
+        if (!docente.tieneCredencialLocal()) return@withContext null
+
         val coincide = PasswordHasher.verificar(
             clave = clave,
             hashGuardado = docente.claveHash,

@@ -42,7 +42,7 @@ class MigracionMensajesTest {
             base.close()
 
             val migrada = Room.databaseBuilder(contexto, MpazDatabase::class.java, nombre)
-                .addMigrations(MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15).build()
+                .addMigrations(MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16).build()
             try {
                 val estudiante = migrada.estudianteDao().buscarPorRut("123456785")!!
                 assertEquals("hash", estudiante.pinHash)

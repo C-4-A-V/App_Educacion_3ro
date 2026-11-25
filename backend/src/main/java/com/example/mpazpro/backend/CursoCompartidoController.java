@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+@org.springframework.context.annotation.Profile("!aula-autenticada")
 @RestController
 @RequestMapping("/api/cursos-compartidos")
 public class CursoCompartidoController {
