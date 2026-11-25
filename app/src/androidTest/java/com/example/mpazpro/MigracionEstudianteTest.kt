@@ -42,7 +42,7 @@ class MigracionEstudianteTest {
             base.close()
 
             val migrada = Room.databaseBuilder(context, MpazDatabase::class.java, nombreDb)
-                .addMigrations(MpazDatabase.MIGRATION_8_9, MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16).build()
+                .addMigrations(MpazDatabase.MIGRATION_8_9, MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16, MpazDatabase.MIGRATION_16_17).build()
             try {
                 val estudiante = migrada.estudianteDao().observarPorCurso(1, 1).first().single()
                 assertEquals(1L, estudiante.id)

@@ -76,6 +76,49 @@ class DocenteAutenticadoApiTest {
         assertEquals(401, enviar(a, ruta + "/publicaciones", actividad, clave).statusCode());
     }
 
+    @Test void creacionIdempotenteAisladaYConcurrente() throws Exception {
+        var a = HttpClient.newBuilder().cookieHandler(new CookieManager()).build();
+        var b = HttpClient.newBuilder().cookieHandler(new CookieManager()).build();
+        String raiz = "http://127.0.0.1:" + puerto;
+        String sufijo = UUID.randomUUID().toString();
+        String credA = "{\"correo\":\"idem-a-" + sufijo + "@ejemplo.cl\",\"clave\":\"clave-segura-a\"}";
+        String credB = "{\"correo\":\"idem-b-" + sufijo + "@ejemplo.cl\",\"clave\":\"clave-segura-b\"}";
+        String ruta = raiz + "/api/docentes/cursos";
+        String clave = UUID.randomUUID().toString();
+        String cuerpo = "{\"seccion\":\"W\"}";
+        assertEquals(401, enviar(a, ruta, cuerpo, clave).statusCode());
+        assertEquals(201, enviar(a, raiz + "/api/docentes/sesion/registro", credA, null).statusCode());
+        assertEquals(201, enviar(b, raiz + "/api/docentes/sesion/registro", credB, null).statusCode());
+        assertEquals(200, enviar(a, raiz + "/api/docentes/sesion/login", credA, null).statusCode());
+        assertEquals(200, enviar(b, raiz + "/api/docentes/sesion/login", credB, null).statusCode());
+        assertEquals(400, enviar(a, ruta, cuerpo, "clave-invalida").statusCode());
+        var primera = enviar(a, ruta, cuerpo, clave);
+        var reenvio = enviar(a, ruta, cuerpo, clave);
+        assertEquals(201, primera.statusCode());
+        assertEquals(200, reenvio.statusCode());
+        var json = new tools.jackson.databind.ObjectMapper();
+        long curso = json.readTree(primera.body()).get("id").asLong();
+        assertEquals(curso, json.readTree(reenvio.body()).get("id").asLong());
+        assertEquals(409, enviar(a, ruta, "{\"seccion\":\"V\"}", clave).statusCode());
+        assertEquals(409, enviar(b, ruta, cuerpo, clave).statusCode());
+        assertFalse(enviar(b, ruta, null, null).body().contains("3° W"));
+
+        String otraClave = UUID.randomUUID().toString();
+        var peticion = HttpRequest.newBuilder(URI.create(ruta))
+            .header("Content-Type", "application/json")
+            .header("Idempotency-Key", otraClave)
+            .POST(HttpRequest.BodyPublishers.ofString("{\"seccion\":\"V\"}")).build();
+        var uno = a.sendAsync(peticion, HttpResponse.BodyHandlers.ofString());
+        var dos = a.sendAsync(peticion, HttpResponse.BodyHandlers.ofString());
+        var respuestas = java.util.List.of(uno.join(), dos.join());
+        assertEquals(java.util.Set.of(200, 201),
+            respuestas.stream().map(HttpResponse::statusCode).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(json.readTree(respuestas.get(0).body()).get("id").asLong(),
+            json.readTree(respuestas.get(1).body()).get("id").asLong());
+        assertEquals(204, enviar(a, raiz + "/api/docentes/sesion/logout", "", null).statusCode());
+        assertEquals(401, enviar(a, ruta, cuerpo, clave).statusCode());
+    }
+
     private HttpResponse<String> enviar(HttpClient cliente, String url, String cuerpo, String clave) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create(url));
         if (cuerpo == null) builder.GET();

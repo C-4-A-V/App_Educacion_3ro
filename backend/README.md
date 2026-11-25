@@ -1,6 +1,6 @@
 # Backend de MPAZ PRO
 
-Proyecto Spring Boot independiente de Android. La versión de depuración permite conectar cursos, compartir preguntas confirmadas y recibir respuestas de prueba. La sincronización de estudiantes y resultados entre dispositivos, y la autenticación del servidor, todavía no están terminadas.
+Proyecto Spring Boot independiente de Android. La versión de depuración permite conectar cursos, compartir preguntas confirmadas y recibir respuestas de prueba. Existe una API docente autenticada para sesiones y cursos; la sincronización de estudiantes y resultados entre dispositivos aún no está terminada.
 
 ## Estado de autenticación y resultados
 
@@ -16,19 +16,21 @@ La prueba `ActividadesSesionPruebaTest` comprueba separación de cursos y estudi
 
 ## API docente autenticada
 
-El perfil `aula-autenticada` expone una API separada. Las rutas antiguas de cursos, publicaciones y aula local quedan desactivadas cuando este perfil está activo. Android todavía no usa esta API y no debe considerarse lista para despliegue.
+El perfil `aula-autenticada` expone una API separada. Las rutas antiguas de cursos, publicaciones y aula local quedan desactivadas cuando este perfil está activo. Android integra el acceso docente y la consulta y creación de cursos con esta API. El resto de los recorridos autenticados y las medidas para el despliegue siguen pendientes.
 
 - `POST /api/docentes/sesion/registro`: `{"correo":"docente@ejemplo.cl","clave":"una-clave-de-10-o-mas"}`.
 - `POST /api/docentes/sesion/login`: mismo cuerpo. Devuelve una cookie de sesión.
 - `GET /api/docentes/sesion` y `POST /api/docentes/sesion/logout`: consultar o cerrar la sesión.
-- `GET /api/docentes/cursos` y `POST /api/docentes/cursos` con `{"seccion":"B"}`: listar cursos asignados y crear uno nuevo.
+- `GET /api/docentes/cursos` y `POST /api/docentes/cursos` con `{"seccion":"B"}`: listar cursos asignados y crear uno nuevo. Para crear, Android envía `Idempotency-Key` con un UUID canónico persistido para la operación.
 - `POST /api/docentes/cursos/{cursoId}/publicaciones`: recibe el cuerpo de actividad completa y la cabecera `Idempotency-Key` con UUID.
 - `POST /api/docentes/cursos/{cursoId}/publicaciones/retirar`: recibe una lista JSON de claves.
 - `GET /api/docentes/cursos/{cursoId}/actividades/{actividadId}/resultados`: resumen de finalizadas y correctas.
 
-Las operaciones de curso usan la identidad de la sesión. Un curso existente no se asigna al registrarse ni puede reclamarse por HTTP. Para la transición, una persona administradora con acceso a la base debe verificar manualmente la pertenencia y ejecutar la tarea local explícita `asignarCursoLocal --args="correo seccion"` con las variables MySQL configuradas; esta operación no crea cursos ni cuentas y es idempotente. No se ha ejecutado sobre los datos existentes.
+La clave de creación queda asociada al docente autenticado y a la sección solicitada. El primer envío exitoso responde `201`; repetir la misma clave y sección devuelve el mismo curso con `200`. Reutilizar la clave para otra sección responde `409` y una clave inválida responde `400`. Curso, permiso y operación se guardan en una sola transacción. Por compatibilidad, el servidor todavía acepta solicitudes sin clave, pero estas no permiten reconciliar de forma idempotente un resultado incierto.
 
-Las contraseñas docentes se derivan con PBKDF2-HMAC-SHA256 y salt aleatorio. El límite de intentos es local al proceso y la sesión usa memoria del servidor: antes de exponerlo hay que completar HTTPS, cookies seguras y protección adecuada para despliegue. Los resultados de la API docente son agregados; el informe detallado y la integración Android siguen pendientes.
+Las operaciones de curso usan la identidad de la sesión. **La sección sigue siendo única en todo el catálogo**, por lo que dos docentes no pueden crear cada uno su propio 3.º A: la segunda creación recibe `409`. Esta limitación debe resolverse mediante una migración y un rediseño del catálogo que preserven las relaciones existentes. Un curso existente no se asigna al registrarse ni puede reclamarse por HTTP. Para la transición, una persona administradora con acceso a la base debe verificar manualmente la pertenencia y ejecutar la tarea local explícita `asignarCursoLocal --args="correo seccion"` con las variables MySQL configuradas; esta operación no crea cursos ni cuentas y es idempotente. No se ha ejecutado sobre los datos existentes.
+
+Las contraseñas docentes se derivan con PBKDF2-HMAC-SHA256 y salt aleatorio. El límite de intentos es local al proceso y la sesión usa memoria del servidor: antes de exponerlo hay que completar HTTPS, cookies seguras y protección adecuada para despliegue. Los resultados de la API docente son agregados; la integración autenticada de publicaciones y del informe detallado en Android sigue pendiente.
 
 ## Requisitos
 
@@ -73,6 +75,8 @@ $env:MPAZ_MYSQL_CLAVE = 'contraseña_de_prueba'
 ```
 
 En el computador de desarrollo, el catálogo migrado utiliza el contenedor `mpaz-mysql-aula`, la base `mpaz_aula` y el puerto local 3308. Para iniciarlo, usa Docker Desktop y configura la URL `jdbc:mysql://127.0.0.1:3308/mpaz_aula`; inicia Spring con los perfiles `mysql,aula-local` y el puerto 8083. El contenedor `mpaz-mysql-prueba` es una base separada y no contiene el catálogo migrado.
+
+El migrador H2→MySQL existente todavía no admite las tablas de identidades docentes ni `operaciones_curso_docente`: ante tablas desconocidas detiene la operación antes de copiar. No se deben considerar migradas esas cuentas, permisos u operaciones; su migración segura está pendiente.
 
 Este perfil crea o actualiza las tablas para desarrollo en la base elegida. Una base nueva tiene su propio identificador de catálogo: no se deben reemplazar los vínculos existentes de Android ni interpretar esa base vacía como una migración. Antes de trasladar H2 a MySQL hay que preparar una copia, conservar la identidad del catálogo y verificar todas las relaciones y datos. La conexión MySQL no sincroniza automáticamente estudiantes, fotos ni resultados.
 

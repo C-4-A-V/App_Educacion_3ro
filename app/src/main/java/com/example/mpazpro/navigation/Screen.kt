@@ -10,8 +10,6 @@ sealed class Screen(val route: String) {
 
     data object PanelDocente : Screen("panel_docente")
 
-    data object ActividadesServidor : Screen("actividades_servidor_prueba")
-
     data object PerfilDocente : Screen("perfil_docente")
 
     data object CursosResultados : Screen("resultados_cursos")

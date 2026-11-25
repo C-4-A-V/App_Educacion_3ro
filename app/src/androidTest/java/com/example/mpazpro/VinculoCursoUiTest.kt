@@ -2,8 +2,6 @@ package com.example.mpazpro
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.example.mpazpro.ui.screens.CursoPropuesto
-import com.example.mpazpro.ui.screens.TarjetaCursoPropuesto
 import com.example.mpazpro.ui.screens.CursoEnLista
 import com.example.mpazpro.data.local.CursoEntity
 import com.example.mpazpro.model.ConexionCurso
@@ -23,27 +21,27 @@ class VinculoCursoUiTest {
             }
         }
         compose.onNodeWithText("3.º Básico A").assertIsDisplayed()
-        compose.onNodeWithText("Conectado").assertIsDisplayed()
+        compose.onNodeWithText("Sincronizado").assertIsDisplayed()
         compose.onNodeWithText("Vincular curso").assertDoesNotExist()
         compose.onNodeWithText("3.º Básico A").performClick()
         compose.runOnIdle { assertEquals(1, aperturas) }
     }
 
-    @Test fun catalogoTemporalNoOfreceVincular() {
+    @Test fun muestraEstadoSinConexion() {
         compose.setContent {
-            DocenteTheme { TarjetaCursoPropuesto(CursoPropuesto(1, 1, "3 A", "temporal"), false) {} }
+            DocenteTheme {
+                CursoEnLista(CursoEntity(id = 1, docenteId = 3, nombre = "3A"), ConexionCurso.SIN_CONEXION, true) {}
+            }
         }
-        compose.onNodeWithText("No disponible con un catálogo temporal.").assertIsDisplayed()
-        compose.onNodeWithText("Vincular curso").assertDoesNotExist()
+        compose.onNodeWithText("Guardado · sin conexión").assertIsDisplayed()
     }
 
-    @Test fun vinculacionDisponibleSoloOcurreAlPresionar() {
-        var pulsaciones = 0
+    @Test fun muestraEstadoRevisarConexion() {
         compose.setContent {
-            DocenteTheme { TarjetaCursoPropuesto(CursoPropuesto(1, 1, "3 A", "disponible"), false) { pulsaciones++ } }
+            DocenteTheme {
+                CursoEnLista(CursoEntity(id = 1, docenteId = 3, nombre = "3A"), ConexionCurso.REVISAR, true) {}
+            }
         }
-        assertEquals(0, pulsaciones)
-        compose.onNodeWithText("Vincular curso").performClick()
-        compose.runOnIdle { assertEquals(1, pulsaciones) }
+        compose.onNodeWithText("Guardado en este dispositivo").assertIsDisplayed()
     }
 }

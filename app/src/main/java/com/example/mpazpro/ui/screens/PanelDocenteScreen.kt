@@ -44,9 +44,9 @@ internal fun CursoEnLista(
                 Text(
                     when (it) {
                         ConexionCurso.CONECTANDO -> "Conectando…"
-                        ConexionCurso.CONECTADO -> "Conectado"
-                        ConexionCurso.SIN_CONEXION -> "Sin conexión · intentaremos nuevamente"
-                        ConexionCurso.REVISAR -> "Necesita revisión"
+                        ConexionCurso.CONECTADO -> "Sincronizado"
+                        ConexionCurso.SIN_CONEXION -> "Guardado · sin conexión"
+                        ConexionCurso.REVISAR -> "Guardado en este dispositivo"
                     },
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -67,7 +67,6 @@ internal fun PanelDocenteContenido(
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel(),
-    onAbrirServidor: (() -> Unit)? = null,
     correoCuenta: String? = null
 ) {
     val estado by cursosViewModel.uiState.collectAsStateWithLifecycle()
@@ -80,12 +79,73 @@ internal fun PanelDocenteContenido(
         AlertDialog(
             onDismissRequest = { if (!estado.guardando) confirmarSeccion = null },
             title = { Text("¿Crear nuevo curso?") },
-            text = { Text("Se creará 3.º Básico $seccion en este dispositivo. Su sincronización aún no está disponible.") },
+            text = { Text("Se creará 3.º Básico $seccion para tu cuenta. Necesitas conexión para confirmar la creación.") },
             confirmButton = {
                 TextButton(onClick = { confirmarSeccion = null; cursosViewModel.crearCurso(seccion) },
                     enabled = !estado.guardando) { Text("Crear curso") }
             },
             dismissButton = { TextButton(onClick = { confirmarSeccion = null }, enabled = !estado.guardando) { Text("Cancelar") } }
+        )
+    }
+    var cursoAnteriorId by rememberSaveable(docente.id) { mutableStateOf<Long?>(null) }
+    var cursoServidorId by rememberSaveable(docente.id) { mutableStateOf<Long?>(null) }
+    val cursoAnterior = estado.cursos.firstOrNull { it.id == cursoAnteriorId }
+    val cursoServidor = estado.remotosSinVincular.firstOrNull { it.id == cursoServidorId }
+
+    if (cursoAnterior != null && cursoServidorId == null) {
+        AlertDialog(
+            onDismissRequest = { cursoAnteriorId = null },
+            title = { Text("Conectar ${PropuestaVinculacionCursos.nombreVisible(cursoAnterior.nombre)}") },
+            text = {
+                Column {
+                    Text("Puedes crear este curso para tu cuenta. Sus estudiantes y actividades guardados se conservarán.")
+                    if (PropuestaVinculacionCursos.seccion(cursoAnterior.nombre) in estado.seccionesPendientesDeAsociar) {
+                        TextButton(enabled = !estado.guardando, onClick = {
+                            val id = cursoAnterior.id
+                            cursoAnteriorId = null
+                            cursosViewModel.conciliarPendiente(id)
+                        }) { Text("Confirmar creación pendiente con este curso") }
+                    }
+                    if (estado.remotosSinVincular.isNotEmpty()) {
+                        Text("También puedes elegir uno de tus cursos que necesita asociación:")
+                        estado.remotosSinVincular.forEach { remoto ->
+                            TextButton(onClick = { cursoServidorId = remoto.id }) {
+                                Text(PropuestaVinculacionCursos.nombreVisible(remoto.nombre))
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !estado.guardando && PropuestaVinculacionCursos.seccion(cursoAnterior.nombre) !in estado.seccionesPendientesDeAsociar,
+                    onClick = {
+                        val id = cursoAnterior.id
+                        cursoAnteriorId = null
+                        cursosViewModel.crearDesdeAnterior(id)
+                    }
+                ) { Text("Crear en el servidor") }
+            },
+            dismissButton = { TextButton(onClick = { cursoAnteriorId = null }) { Text("Cancelar") } }
+        )
+    }
+    if (cursoAnterior != null && cursoServidor != null) {
+        AlertDialog(
+            onDismissRequest = { cursoServidorId = null },
+            title = { Text("¿Asociar este curso?") },
+            text = {
+                Text("Asociarás ${PropuestaVinculacionCursos.nombreVisible(cursoAnterior.nombre)} con ${PropuestaVinculacionCursos.nombreVisible(cursoServidor.nombre)} de tu cuenta. Se conservarán los datos guardados.")
+            },
+            confirmButton = {
+                TextButton(enabled = !estado.guardando, onClick = {
+                    val localId = cursoAnterior.id
+                    val remotoId = cursoServidor.id
+                    cursoAnteriorId = null
+                    cursoServidorId = null
+                    cursosViewModel.asociarExistente(localId, remotoId)
+                }) { Text("Asociar curso") }
+            },
+            dismissButton = { TextButton(onClick = { cursoServidorId = null }) { Text("Volver") } }
         )
     }
     var accion by rememberSaveable(docente.id) {
@@ -136,17 +196,25 @@ internal fun PanelDocenteContenido(
                         items = estado.cursos,
                         key = { it.id }
                     ) { curso ->
-                        CursoEnLista(
-                            curso = curso,
-                            conexion = if (onAbrirServidor != null) estado.conexiones[curso.id] ?: ConexionCurso.CONECTANDO else null,
-                            habilitado = !estado.guardando,
-                            onAbrir = {
-                                val elegida = accion
-                                accion = null
-                                if (elegida == "actividades") onAbrirActividades(curso.id, "actividades")
-                                else onAbrirCurso(curso.id)
+                        Column {
+                            CursoEnLista(
+                                curso = curso,
+                                conexion = estado.conexiones[curso.id],
+                                habilitado = !estado.guardando,
+                                onAbrir = {
+                                    val elegida = accion
+                                    accion = null
+                                    if (elegida == "actividades") onAbrirActividades(curso.id, "actividades")
+                                    else onAbrirCurso(curso.id)
+                                }
+                            )
+                            if (curso.id !in estado.localesVinculados) {
+                                TextButton(enabled = !estado.guardando, onClick = {
+                                    accion = null
+                                    cursoAnteriorId = curso.id
+                                }) { Text("Conectar este curso") }
                             }
-                        )
+                        }
                     }
 
                     if (
@@ -160,16 +228,13 @@ internal fun PanelDocenteContenido(
                         }
                     }
 
-                    if (onAbrirServidor != null && (estado.requiereRevisionGlobal || estado.conexiones.values.any {
+                    if (estado.requiereRevisionGlobal || estado.conexiones.values.any {
                             it == ConexionCurso.SIN_CONEXION || it == ConexionCurso.REVISAR
-                        })) {
+                        }) {
                         item {
                             if (estado.requiereRevisionGlobal || estado.conexiones.values.any { it == ConexionCurso.REVISAR }) {
                                 Text("Hay cursos que necesitan revisión de sus nombres o conexiones.",
                                     style = MaterialTheme.typography.bodySmall)
-                                TextButton(onClick = { accion = null; onAbrirServidor() }, enabled = !estado.guardando) {
-                                    Text("Revisar conexión")
-                                }
                             }
                             TextButton(onClick = cursosViewModel::revisarConexiones, enabled = !estado.guardando) {
                                 Text("Reintentar conexión")

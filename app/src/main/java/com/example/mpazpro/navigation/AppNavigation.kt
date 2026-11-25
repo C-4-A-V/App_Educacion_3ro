@@ -2,7 +2,6 @@ package com.example.mpazpro.navigation
 
 import android.content.pm.ApplicationInfo
 import androidx.compose.ui.platform.LocalContext
-import com.example.mpazpro.ui.screens.ActividadesServidorScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -307,15 +306,6 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.ActividadesServidor.route) {
-            val docente = estadoLogin.docente
-            if (esDepuracion && docente != null) {
-                ActividadesServidorScreen(docenteId = docente.id, onVolver = { navController.popBackStack() })
-            } else {
-                LaunchedEffect(Unit) { navController.popBackStack() }
-            }
-        }
-
         composable(Screen.PanelDocente.route) {
             val docente = estadoLogin.docente
             val remoto by loginViewModel.sesionRemota.collectAsStateWithLifecycle()
@@ -327,7 +317,6 @@ fun AppNavigation(
                     fotoRuta = estadoPerfil.docente
                         ?.takeIf { it.id == docente.id }
                         ?.fotoRuta,
-                    onAbrirServidor = null,
                     onAbrirPerfil = {
                         navController.navigate(Screen.PerfilDocente.route) {
                             launchSingleTop = true

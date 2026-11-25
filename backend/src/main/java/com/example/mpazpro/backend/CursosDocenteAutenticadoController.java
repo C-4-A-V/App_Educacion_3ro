@@ -16,16 +16,16 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/docentes/cursos")
 class CursosDocenteAutenticadoController {
     private final DocenteAulaRepository docentes;
-    private final CursoCompartidoRepository cursos;
+    private final CreacionCursoDocenteService creacion;
     private final CursoDocenteAulaRepository permisos;
     private final PublicacionActividadService publicador;
     private final ActividadCompletaRepository actividades;
     private final IntentoAulaRepository intentos;
 
-    CursosDocenteAutenticadoController(DocenteAulaRepository docentes, CursoCompartidoRepository cursos,
+    CursosDocenteAutenticadoController(DocenteAulaRepository docentes, CreacionCursoDocenteService creacion,
             CursoDocenteAulaRepository permisos, PublicacionActividadService publicador,
             ActividadCompletaRepository actividades, IntentoAulaRepository intentos) {
-        this.docentes = docentes; this.cursos = cursos; this.permisos = permisos;
+        this.docentes = docentes; this.creacion = creacion; this.permisos = permisos;
         this.publicador = publicador; this.actividades = actividades; this.intentos = intentos;
     }
 
@@ -42,15 +42,16 @@ class CursosDocenteAutenticadoController {
     }
 
     @PostMapping
-    @Transactional
-    @ResponseStatus(HttpStatus.CREATED)
-    Curso crear(@Valid @RequestBody CrearCurso datos, HttpServletRequest request) {
-        var docente = docentes.findById(docente(request)).orElseThrow();
-        if (cursos.findBySeccion(datos.seccion()).isPresent())
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "La sección ya existe y requiere asignación administrativa");
-        var curso = cursos.saveAndFlush(new CursoCompartido(datos.seccion()));
-        permisos.saveAndFlush(new CursoDocenteAula(docente, curso));
-        return new Curso(curso.getId(), curso.getNombre());
+    ResponseEntity<Curso> crear(@Valid @RequestBody CrearCurso datos,
+            @RequestHeader(value = "Idempotency-Key", required = false) String clave, HttpServletRequest request) {
+        try {
+            var resultado = creacion.crear(docente(request), datos.seccion(), clave);
+            return ResponseEntity.status(resultado.creada() ? HttpStatus.CREATED : HttpStatus.OK)
+                .body(new Curso(resultado.id(), resultado.nombre()));
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Otra cuenta pudo crear simultáneamente la misma sección.
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La sección ya existe");
+        }
     }
 
     @PostMapping("/{cursoId}/publicaciones")

@@ -43,7 +43,7 @@ class MigracionCopiaCursoTest {
             base.close()
 
             val migrada = Room.databaseBuilder(contexto, MpazDatabase::class.java, nombre)
-                .addMigrations(MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16).build()
+                .addMigrations(MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16, MpazDatabase.MIGRATION_16_17).build()
             try {
                 assertEquals(7L, migrada.cursoDao().buscarPorIdYDocente(7, 1)!!.id)
                 assertEquals("hash", migrada.estudianteDao().buscarPorRut("123456785")!!.pinHash)

@@ -22,7 +22,7 @@ class DocenteRemotoSpringTest {
         assertEquals(correo, repo.entrar(correo, clave).correo)
         assertEquals(correo, repo.recuperarSesion().correo)
         assertTrue(repo.cursos().isEmpty())
-        val nuevo = repo.crearCurso("Z")
+        val nuevo = repo.crearCurso("Z", java.util.UUID.randomUUID().toString())
         assertTrue(nuevo.id > 0)
         assertTrue(repo.cursos().any { it.id == nuevo.id })
         repo.salir()

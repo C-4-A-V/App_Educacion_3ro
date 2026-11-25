@@ -19,9 +19,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PublicacionPendienteEntity::class,
         ActividadRetiradaEntity::class,
         ActividadCopiaEntity::class,
-        IdentidadDocenteEntity::class
+        IdentidadDocenteEntity::class,
+        VinculoCursoAutenticadoEntity::class,
+        CreacionCursoPendienteEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = true
 )
 abstract class MpazDatabase : RoomDatabase() {
@@ -29,6 +31,8 @@ abstract class MpazDatabase : RoomDatabase() {
     abstract fun docenteDao(): DocenteDao
 
     abstract fun identidadDocenteDao(): IdentidadDocenteDao
+
+    abstract fun cursoAutenticadoDao(): CursoAutenticadoDao
 
     abstract fun cursoDao(): CursoDao
 
@@ -315,6 +319,27 @@ abstract class MpazDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS vinculos_curso_autenticado (
+                    catalogoId TEXT NOT NULL, docenteServidorId INTEGER NOT NULL,
+                    cursoServidorId INTEGER NOT NULL, cursoLocalId INTEGER NOT NULL,
+                    PRIMARY KEY(catalogoId, docenteServidorId, cursoServidorId),
+                    FOREIGN KEY(catalogoId, docenteServidorId) REFERENCES identidades_docentes(catalogoId, docenteServidorId) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(cursoLocalId) REFERENCES cursos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_vinculos_curso_autenticado_cursoLocalId ON vinculos_curso_autenticado(cursoLocalId)")
+                db.execSQL("""CREATE TABLE IF NOT EXISTS creaciones_curso_pendientes (
+                    clave TEXT NOT NULL PRIMARY KEY, catalogoId TEXT NOT NULL,
+                    docenteServidorId INTEGER NOT NULL, seccion TEXT NOT NULL, cursoLocalId INTEGER,
+                    FOREIGN KEY(catalogoId, docenteServidorId) REFERENCES identidades_docentes(catalogoId, docenteServidorId) ON UPDATE NO ACTION ON DELETE CASCADE,
+                    FOREIGN KEY(cursoLocalId) REFERENCES cursos(id) ON UPDATE NO ACTION ON DELETE RESTRICT
+                )""")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_creaciones_curso_pendientes_catalogoId_docenteServidorId_seccion ON creaciones_curso_pendientes(catalogoId, docenteServidorId, seccion)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_creaciones_curso_pendientes_cursoLocalId ON creaciones_curso_pendientes(cursoLocalId)")
+            }
+        }
+
         fun obtenerInstancia(context: Context): MpazDatabase {
             return instancia ?: synchronized(this) {
                 instancia ?: Room.databaseBuilder(
@@ -338,6 +363,7 @@ abstract class MpazDatabase : RoomDatabase() {
                         MIGRATION_13_14,
                         MIGRATION_14_15,
                         MIGRATION_15_16,
+                        MIGRATION_16_17,
                     )
                     .build()
                     .also { instancia = it }

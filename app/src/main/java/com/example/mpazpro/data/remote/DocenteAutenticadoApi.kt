@@ -35,7 +35,7 @@ interface DocenteAutenticadoApi {
     @GET("api/docentes/cursos")
     suspend fun cursos(): Response<List<CursoDocenteRemoto>>
     @POST("api/docentes/cursos")
-    suspend fun crearCurso(@Body datos: CrearCursoDocenteRemoto): Response<CursoDocenteRemoto>
+    suspend fun crearCurso(@Header("Idempotency-Key") clave: String, @Body datos: CrearCursoDocenteRemoto): Response<CursoDocenteRemoto>
     @POST("api/docentes/cursos/{cursoId}/publicaciones")
     suspend fun publicar(@Path("cursoId") cursoId: Long, @Header("Idempotency-Key") clave: String,
                          @Body actividad: SolicitudPublicacion): Response<RespuestaPublicacion>

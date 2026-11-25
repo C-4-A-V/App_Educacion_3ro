@@ -56,11 +56,12 @@ class DocenteRemotoRepository(private val cliente: ClienteDocenteAutenticado) {
         }
     }
 
-    /** No se reenvía automáticamente: el servidor no ofrece clave de idempotencia para esta operación. */
-    suspend fun crearCurso(seccion: String): CursoDocenteRemoto = mutex.withLock {
+    /** La clave debe persistirse antes del envío y reutilizarse para reintentar la misma operación. */
+    suspend fun crearCurso(seccion: String, clave: String): CursoDocenteRemoto = mutex.withLock {
         exigirSesion()
         require(seccion.matches(Regex("[A-Z]")))
-        obtener(cliente.api.crearCurso(CrearCursoDocenteRemoto(seccion)))
+        require(UUID.fromString(clave).toString() == clave)
+        obtener(cliente.api.crearCurso(clave, CrearCursoDocenteRemoto(seccion)))
     }
 
     suspend fun publicar(cursoId: Long, clave: String, actividad: SolicitudPublicacion): RespuestaPublicacion =

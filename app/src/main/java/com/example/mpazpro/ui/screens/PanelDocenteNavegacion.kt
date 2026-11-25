@@ -47,7 +47,6 @@ fun PanelDocenteScreen(
     onAbrirActividades: (Long, String) -> Unit,
     onAbrirPerfil: () -> Unit,
     onAbrirResultados: () -> Unit,
-    onAbrirServidor: (() -> Unit)? = null,
     fotoRuta: String? = null,
     modifier: Modifier = Modifier,
     cursosViewModel: CursosViewModel = viewModel(),
@@ -103,7 +102,7 @@ fun PanelDocenteScreen(
             PanelDocenteContenido(
                 docente, onCerrarSesion, onAbrirCurso, onAbrirActividades,
                 onAbrirPerfil, onAbrirResultados, fotoRuta,
-                Modifier.padding(padding), cursosViewModel, onAbrirServidor, correoCuenta
+                Modifier.padding(padding), cursosViewModel, correoCuenta
             )
         }
     }

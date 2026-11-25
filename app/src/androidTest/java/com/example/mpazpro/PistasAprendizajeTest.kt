@@ -83,7 +83,7 @@ class PistasAprendizajeTest {
             sqlite.version = 7
         }
         val migrada = Room.databaseBuilder(context, MpazDatabase::class.java, nombre)
-            .addMigrations(MpazDatabase.MIGRATION_7_8, MpazDatabase.MIGRATION_8_9, MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16).build()
+            .addMigrations(MpazDatabase.MIGRATION_7_8, MpazDatabase.MIGRATION_8_9, MpazDatabase.MIGRATION_9_10, MpazDatabase.MIGRATION_10_11, MpazDatabase.MIGRATION_11_12, MpazDatabase.MIGRATION_12_13, MpazDatabase.MIGRATION_13_14, MpazDatabase.MIGRATION_14_15, MpazDatabase.MIGRATION_15_16, MpazDatabase.MIGRATION_16_17).build()
         try {
             val actividad = migrada.actividadDao().buscarPorId(1)!!
             assertEquals(PistasIniciales.paraPregunta(pregunta.titulo, pregunta.asignatura.id), actividad.pista)
