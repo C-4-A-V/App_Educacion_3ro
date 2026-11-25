@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -44,7 +46,15 @@ android {
             buildConfigField("String", "URL_SERVIDOR", "\"http://127.0.0.1:8080/\"")
         }
         release {
-            buildConfigField("String", "URL_SERVIDOR", "\"https://servidor-no-configurado.invalid/\"")
+            val urlServidor = providers.gradleProperty("mpazServidorUrl")
+                .orElse("https://servidor-no-configurado.invalid/").get()
+            val uriServidor = URI(urlServidor)
+            require(uriServidor.scheme == "https" && !uriServidor.host.isNullOrBlank() &&
+                uriServidor.userInfo == null && uriServidor.query == null && uriServidor.fragment == null &&
+                urlServidor.endsWith("/") && urlServidor.none { it == '"' || it == '\\' }) {
+                "mpazServidorUrl debe ser una dirección HTTPS válida terminada en /, sin credenciales ni parámetros."
+            }
+            buildConfigField("String", "URL_SERVIDOR", "\"$urlServidor\"")
             signingConfigs.findByName("firmaExterna")?.let { signingConfig = it }
             optimization {
                 enable = true

@@ -21,12 +21,21 @@ class PreferenciasAulaEstudianteTest {
             val primero = PreferenciasAulaEstudiante(PreferenceDataStoreFactory.create(
                 scope = CoroutineScope(Dispatchers.IO + trabajo1), produceFile = { archivo }
             ))
+            val revisionInicial = primero.revisarMigracion(1, catalogo)
+            assertNull(revisionInicial.tokenAnterior)
+            assertTrue(revisionInicial.actividadesPendientes.isEmpty())
+            assertNull(primero.tokenExistente(1, catalogo))
             val token1 = primero.token(1, catalogo)
             assertEquals(token1, primero.token(1, catalogo))
             assertNotEquals(token1, primero.token(2, catalogo))
             val intento = IntentoAulaPendiente(1, 2)
             primero.preparar(1, catalogo, 7, intento)
             primero.preparar(1, catalogo, 7, intento)
+            primero.preparar(2, catalogo, 9, intento)
+            val revision = primero.revisarMigracion(1, catalogo)
+            assertEquals(token1, revision.tokenAnterior)
+            assertEquals(listOf(7L), revision.actividadesPendientes)
+            assertEquals(intento, primero.pendiente(1, catalogo, 7))
             try {
                 primero.preparar(1, catalogo, 7, IntentoAulaPendiente(1, 3))
                 fail("No debe reemplazar una respuesta pendiente")

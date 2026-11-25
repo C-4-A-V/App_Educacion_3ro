@@ -39,6 +39,13 @@ tasks.register<JavaExec>("migrarCatalogo") {
     mainClass.set("com.example.mpazpro.backend.MigracionCatalogoCli")
 }
 
+tasks.register<JavaExec>("altaEstudianteLocal") {
+    group = "application"
+    description = "Crea una cuenta de estudiante en el catálogo MySQL local."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("com.example.mpazpro.backend.AltaEstudianteLocalCli")
+}
+
 springBoot {
     mainClass.set("com.example.mpazpro.backend.MpazBackendApplication")
 }

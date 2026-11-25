@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface ActividadCompletaRepository extends JpaRepository<ActividadCompleta, Long> {
     List<ActividadCompleta> findByCursoIdAndAsignaturaIdOrderByIdAsc(Long cursoId, String asignaturaId);
+    List<ActividadCompleta> findByCursoIdOrderByIdAsc(Long cursoId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from ActividadCompleta a where a.id = :id")

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 private val Context.preferenciasAula by preferencesDataStore(name = "aula_estudiante")
 
 data class IntentoAulaPendiente(val numero: Int, val respuestaElegida: Int)
+data class RevisionAulaAnterior(val tokenAnterior: String?, val actividadesPendientes: List<Long>)
 
 /** Identificadores aleatorios y reintentos locales; nunca almacena RUT ni PIN. */
 class PreferenciasAulaEstudiante internal constructor(private val store: DataStore<Preferences>) {
@@ -25,6 +26,22 @@ class PreferenciasAulaEstudiante internal constructor(private val store: DataSto
 
     suspend fun tokenExistente(estudianteId: Long, catalogoId: String): String? =
         store.data.first()[stringPreferencesKey(prefijo(estudianteId, catalogoId) + "token")]
+
+    /** Revisión local sin crear identificadores ni modificar respuestas pendientes. */
+    suspend fun revisarMigracion(estudianteId: Long, catalogoId: String): RevisionAulaAnterior {
+        val prefijo = prefijo(estudianteId, catalogoId)
+        val datos = store.data.first()
+        val token = datos[stringPreferencesKey(prefijo + "token")]
+        val pendientes = datos.asMap().keys
+            .filter { it.name.startsWith(prefijo + "a_") && it.name.endsWith("_pendiente") }
+            .map { clave ->
+                val textoId = clave.name.removePrefix(prefijo + "a_").removeSuffix("_pendiente")
+                val id = textoId.toLongOrNull()
+                check(id != null && id > 0) { "Identificador de respuesta pendiente inválido" }
+                id
+            }.sorted()
+        return RevisionAulaAnterior(token, pendientes)
+    }
 
     suspend fun token(estudianteId: Long, catalogoId: String): String {
         val clave = stringPreferencesKey(prefijo(estudianteId, catalogoId) + "token")

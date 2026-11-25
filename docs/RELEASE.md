@@ -6,6 +6,8 @@ La variante release se compila con R8 y reducción de recursos, pero las funcion
 
 El backend `aula-local` no autentica docentes y solo debe utilizarse para pruebas locales. Antes de habilitar acceso desde release hay que implementar autenticación y autorización, usar HTTPS y disponer de una dirección accesible para el teléfono. No incluir contraseñas del servidor ni credenciales de base de datos en la app o el repositorio.
 
+La dirección futura se puede configurar con la propiedad Gradle `mpazServidorUrl`, por ejemplo `-PmpazServidorUrl=https://ejemplo.cl/`. Debe usar HTTPS y terminar en `/`. Configurarla no activa el aula compartida: esta continúa deshabilitada en release hasta implementar un servidor seguro.
+
 Las cuentas de demostración siguen en el código común; separarlas para release sigue pendiente. Los estudiantes, fotos y resultados locales aún no se sincronizan entre dispositivos.
 
 ## Firma
