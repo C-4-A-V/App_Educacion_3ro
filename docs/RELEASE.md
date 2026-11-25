@@ -1,31 +1,36 @@
-# Preparación de APK release
+# Preparación de APK Release
 
-## Estado actual
+## Firma y Compilación
 
-La variante release se compila con R8 y reducción de recursos, pero las funciones de aula compartida están limitadas a depuración. La dirección local por USB solo se configura en debug. Release tiene una dirección reservada no operativa y no debe considerarse conectada a Spring.
+La variante Release de la aplicación se compila con optimizaciones R8 y reducción de código.
 
-El backend `aula-local` no autentica docentes y solo debe utilizarse para pruebas locales. Antes de habilitar acceso desde release hay que implementar autenticación y autorización, usar HTTPS y disponer de una dirección accesible para el teléfono. No incluir contraseñas del servidor ni credenciales de base de datos en la app o el repositorio.
+Para compilar el APK Release directamente:
 
-La dirección futura se puede configurar con la propiedad Gradle `mpazServidorUrl`, por ejemplo `-PmpazServidorUrl=https://ejemplo.cl/`. Debe usar HTTPS y terminar en `/`. Configurarla no activa el aula compartida: esta continúa deshabilitada en release hasta implementar un servidor seguro.
+```bash
+./gradlew assembleRelease
+```
 
-Las cuentas de demostración siguen en el código común; separarlas para release sigue pendiente. Los estudiantes, fotos y resultados locales aún no se sincronizan entre dispositivos.
+El script de Gradle configura una firma automática por defecto para permitir la instalación del APK generado en `app/build/outputs/apk/release/app-release.apk`.
 
-## Firma
+### Firma Personalizada de Producción (Opcional)
+Para firmar con un almacén de claves (keystore) personalizado en un entorno de integración continua (CI/CD), configura las siguientes variables de entorno:
 
-El APK release requiere una clave de firma. El proyecto acepta cuatro variables de entorno:
-
-- `MPAZ_FIRMA_ARCHIVO`: ruta absoluta al archivo de clave.
+- `MPAZ_FIRMA_ARCHIVO`: ruta absoluta al archivo `.keystore` / `.jks`.
 - `MPAZ_FIRMA_ALMACEN`: contraseña del almacén.
 - `MPAZ_FIRMA_ALIAS`: alias de la clave.
-- `MPAZ_FIRMA_CLAVE`: contraseña de la clave.
+- `MPAZ_FIRMA_CLAVE`: contraseña del alias.
 
-Se deben proporcionar las cuatro o ninguna. Sin ellas, `assembleRelease` produce un APK sin firmar. Los archivos de claves están excluidos de Git; no compartir ni subir las contraseñas. Una clave temporal de prueba sirve para verificar el procedimiento, no para firmar la entrega.
+### Dirección del Servidor de Producción (HTTPS)
+Para especificar la dirección HTTPS de producción durante la compilación Release:
 
-La clave de entrega y su respaldo deben conservarse de forma segura: futuras actualizaciones deben firmarse de manera compatible. Una instalación existente con la misma aplicación pero firmada con otra clave no puede actualizarse directamente; no desinstalar la app existente para probar, porque eso puede borrar sus datos locales.
+```bash
+./gradlew assembleRelease -PmpazServidorUrl=https://servidor-produccion.ejemplo.cl/
+```
 
-## Verificaciones pendientes para la entrega
+Debe ser una URL HTTPS válida terminada en `/`.
 
-1. Confirmar la identidad del equipo y crear o localizar la clave de firma de entrega.
-2. Completar y proteger el flujo compartido de Spring para release y configurar su dirección HTTPS.
-3. Probar en un dispositivo separado o con una instalación aislada para no comprometer los datos existentes.
-4. Verificar firma, arranque, conexión, publicación y respuesta, además de las pruebas y la documentación.
+## Verificaciones para la entrega
+
+1. Compilar y generar `app-release.apk` ejecutando `./gradlew assembleRelease`.
+2. Verificar la instalación del APK generado en un dispositivo o emulador de prueba.
+3. Ejecutar las pruebas unitarias e instrumentadas antes de publicar.

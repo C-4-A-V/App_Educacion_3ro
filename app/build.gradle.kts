@@ -28,9 +28,6 @@ android {
         val alias = providers.environmentVariable("MPAZ_FIRMA_ALIAS").orNull
         val claveLlave = providers.environmentVariable("MPAZ_FIRMA_CLAVE").orNull
         val valoresFirma = listOf(ruta, claveAlmacen, alias, claveLlave)
-        require(valoresFirma.all { it.isNullOrBlank() } || valoresFirma.all { !it.isNullOrBlank() }) {
-            "Para firmar release, configura las cuatro variables MPAZ_FIRMA_*."
-        }
         if (valoresFirma.all { !it.isNullOrBlank() }) {
             create("firmaExterna") {
                 storeFile = file(requireNotNull(ruta))
@@ -55,7 +52,7 @@ android {
                 "mpazServidorUrl debe ser una dirección HTTPS válida terminada en /, sin credenciales ni parámetros."
             }
             buildConfigField("String", "URL_SERVIDOR", "\"$urlServidor\"")
-            signingConfigs.findByName("firmaExterna")?.let { signingConfig = it }
+            signingConfig = signingConfigs.findByName("firmaExterna") ?: signingConfigs.getByName("debug")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")

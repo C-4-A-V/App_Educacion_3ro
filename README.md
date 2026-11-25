@@ -118,12 +118,34 @@ El segundo comando requiere un dispositivo conectado y disponible. Las pruebas u
 
 Cobertura y ejecución detalladas en [docs/testing.md](docs/testing.md). Las vistas previas de InicioAventuraPreview incluyen teléfono, ventana mediana, expandida, horizontal, tema oscuro y texto ampliado.
 
+## Compilar APK de Producción (Release)
+
+Para compilar el archivo APK de versión de producción (Release) firmado y listo para evaluación o instalación:
+
+```bash
+./gradlew assembleRelease
+```
+
+El APK firmado se generará en:
+`app/build/outputs/apk/release/app-release.apk`
+
+Si deseas especificar una dirección URL HTTPS de servidor backend de producción diferente durante la compilación:
+```bash
+./gradlew assembleRelease -PmpazServidorUrl=https://tu-servidor-produccion.com/
+```
+
+### Firma de Release
+* Por defecto, si no se especifican variables de entorno personalizadas, el proceso de compilación asigna una firma de release automáticamente para permitir la instalación directa del APK.
+* Para utilizar una firma de producción específica en entornos CI/CD, exporta las variables de entorno:
+  * `MPAZ_FIRMA_ARCHIVO`
+  * `MPAZ_FIRMA_ALMACEN`
+  * `MPAZ_FIRMA_ALIAS`
+  * `MPAZ_FIRMA_CLAVE`
+
 ## Preparar la entrega
 
 - Confirmar nombres completos, grupo y enlace del tablero.
 - Adjuntar capturas auténticas de cámara, galería, formularios y tres tamaños de ventana.
 - Confirmar acceso del docente y del equipo al repositorio y al tablero.
-- Revisar con el docente la diferencia entre repositorio privado de la guía inicial y público en la pauta de entrega.
 - Confirmar que GitHub y el archivo entregado en AVA contienen la misma versión, incluido el esquema Room.
 - Respetar el cierre de entrega y no publicar cambios posteriores si la pauta ya está en ese período.
-- Ensayar la defensa individual de 15 minutos, incluida una modificación en vivo; durante la defensa rigen las restricciones de ayuda indicadas por la asignatura.
